@@ -21,14 +21,19 @@ function createResponseDouble() {
 }
 
 describe('create post controller', () => {
-  it('adapts request input and calls the use case', async () => {
-    const execute = vi.fn(async () => ({ post: { id: 'p3' } }));
+  it('asserts authorization and calls the use case', async () => {
+    const execute = vi.fn(() => ({ post: { id: 'p3' } }));
+    const assert = vi.fn(async () => undefined);
     const controller = createCreatePostController({
       createPostUseCase: { execute },
     });
     const res = createResponseDouble();
     const user: User = { id: 'u2', name: 'Bob', roles: ['editor'] };
-    const authz = { scope: '*', roles: ['editor'] } as unknown as AppSession;
+    const authz = {
+      scope: '*',
+      roles: ['editor'],
+      assert,
+    } as unknown as AppSession;
     const req = {
       body: { title: 'New title' },
       user,
@@ -37,8 +42,8 @@ describe('create post controller', () => {
 
     await controller(req as never, res as never);
 
+    expect(assert).toHaveBeenCalledWith('post', 'create');
     expect(execute).toHaveBeenCalledWith({
-      authz,
       user,
       title: 'New title',
     });

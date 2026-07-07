@@ -2,13 +2,12 @@ import type { Request, Response } from 'express';
 import { requireAuthenticatedRequest } from './helpers.js';
 
 export function createListPostsController(input: {
-  listPostsUseCase: {
-    execute(authz: NonNullable<Request['authz']>): Promise<unknown>;
-  };
+  listPostsUseCase: { execute(): unknown };
 }) {
   return async (req: Request, res: Response): Promise<void> => {
     const auth = requireAuthenticatedRequest(req);
-    const result = await input.listPostsUseCase.execute(auth.authz);
+    await auth.authz.assert('post', 'read');
+    const result = input.listPostsUseCase.execute();
     res.json(result);
   };
 }

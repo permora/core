@@ -92,9 +92,7 @@ export function createAppContainer(): AppContainer {
   const updatePostUseCase = createUpdatePostUseCase({ postRepository });
   const deletePostUseCase = createDeletePostUseCase({ postRepository });
   const publishPostUseCase = createPublishPostUseCase({ postRepository });
-  const explainPostDeleteUseCase = createExplainPostDeleteUseCase({
-    postRepository,
-  });
+  const explainPostDeleteUseCase = createExplainPostDeleteUseCase();
 
   return {
     authz,
@@ -105,10 +103,20 @@ export function createAppContainer(): AppContainer {
     getMeController: createGetMeController({ getMeUseCase }),
     listPostsController: createListPostsController({ listPostsUseCase }),
     createPostController: createCreatePostController({ createPostUseCase }),
-    updatePostController: createUpdatePostController({ updatePostUseCase }),
-    deletePostController: createDeletePostController({ deletePostUseCase }),
-    publishPostController: createPublishPostController({ publishPostUseCase }),
+    updatePostController: createUpdatePostController({
+      postRepository,
+      updatePostUseCase,
+    }),
+    deletePostController: createDeletePostController({
+      postRepository,
+      deletePostUseCase,
+    }),
+    publishPostController: createPublishPostController({
+      postRepository,
+      publishPostUseCase,
+    }),
     explainPostDeleteController: createExplainPostDeleteController({
+      postRepository,
       explainPostDeleteUseCase,
     }),
   };

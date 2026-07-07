@@ -1,7 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { createInMemoryPostRepository } from '../../src/repositories/post.repository.js';
+import { describe, expect, it } from 'vitest';
 import { createExplainPostDeleteUseCase } from '../../src/use-cases/explain-post-delete.use-case.js';
-import type { AppSession } from '../../src/types/app-session.js';
 
 const explanation = {
   allowed: false,
@@ -14,23 +12,11 @@ const explanation = {
 } as const;
 
 describe('explain post delete use case', () => {
-  it('returns the session explanation payload', async () => {
-    const postRepository = createInMemoryPostRepository([
-      { id: 'p1', authorId: 'u1', title: 'A', published: false },
-    ]);
-    const useCase = createExplainPostDeleteUseCase({ postRepository });
-    const authz = {
-      explain: vi.fn(async () => explanation),
-    } as Pick<AppSession, 'explain'> as AppSession;
+  it('wraps the explanation payload as a response dto', () => {
+    const useCase = createExplainPostDeleteUseCase();
 
-    const result = await useCase.execute({ authz, postId: 'p1' });
+    const result = useCase.execute(explanation as never);
 
-    expect(result.explanation).toBe(explanation);
-    expect(authz.explain).toHaveBeenCalledWith('post', 'delete', {
-      id: 'p1',
-      authorId: 'u1',
-      title: 'A',
-      published: false,
-    });
+    expect(result).toEqual({ explanation });
   });
 });

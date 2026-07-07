@@ -4,16 +4,15 @@ import { readTitleFromBody, requireAuthenticatedRequest } from './helpers.js';
 export function createCreatePostController(input: {
   createPostUseCase: {
     execute(input: {
-      authz: NonNullable<Request['authz']>;
       user: NonNullable<Request['user']>;
       title: string;
-    }): Promise<unknown>;
+    }): unknown;
   };
 }) {
   return async (req: Request, res: Response): Promise<void> => {
     const auth = requireAuthenticatedRequest(req);
-    const result = await input.createPostUseCase.execute({
-      authz: auth.authz,
+    await auth.authz.assert('post', 'create');
+    const result = input.createPostUseCase.execute({
       user: auth.user,
       title: readTitleFromBody(req.body),
     });
