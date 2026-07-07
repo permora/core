@@ -16,3 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `AuthorizationSession` API: `can`, `cannot`, `assert`, `explain` and `allowedActions`
 - Partial session compilation with local grant index (O(1) candidate lookup)
 - Error hierarchy with stable codes (`AUTHZ_UNKNOWN_ROLE`, `AUTHZ_CIRCULAR_ROLE_INHERITANCE`, `AUTHZ_DENIED`, `AUTHZ_INVALID_PERMISSION_DEFINITION`)
+- Observer plugins via `definePlugin` and `createAuthorization({ plugins })` with hooks: `onSessionCreate`, `onEvaluationStart`, `onGrantEvaluation`, `onEvaluationEnd`, `onGranted`, `onDenied`

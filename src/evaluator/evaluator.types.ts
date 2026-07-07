@@ -1,13 +1,16 @@
 import type { CompiledGrant, GrantIndex } from '../grants/grant.types';
+import type { AuthorizationPlugin } from '../plugins/plugin.types';
 
 export type EvaluationInput = {
   readonly grants: GrantIndex;
   readonly subject: unknown;
   readonly scope: string;
+  readonly roles: readonly string[];
   readonly context: unknown;
   readonly resource: string;
   readonly action: string;
   readonly resourceInstance: unknown;
+  readonly plugins?: readonly AuthorizationPlugin[];
 };
 
 export type GrantEvaluation = {

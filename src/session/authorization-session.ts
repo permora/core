@@ -2,6 +2,7 @@ import { AuthorizationDeniedError } from '../errors/authorization-denied-error';
 import { evaluate } from '../evaluator/evaluator';
 import type { EvaluationResult } from '../evaluator/evaluator.types';
 import type { GrantIndex } from '../grants/grant.types';
+import type { AuthorizationPlugin } from '../plugins/plugin.types';
 import type {
   ActionOf,
   InstanceOf,
@@ -30,14 +31,20 @@ export class AuthorizationSession<
 
   private readonly grants: GrantIndex;
   private readonly resources: Resources;
+  private readonly plugins: readonly AuthorizationPlugin<Subject, Context>[];
 
-  constructor(resources: Resources, data: CompiledSessionData) {
+  constructor(
+    resources: Resources,
+    data: CompiledSessionData,
+    plugins: readonly AuthorizationPlugin<Subject, Context>[] = [],
+  ) {
     this.resources = resources;
     this.subject = data.subject as Subject;
     this.scope = data.scope;
     this.roles = data.roles;
     this.context = data.context as Context;
     this.grants = data.grants;
+    this.plugins = plugins;
   }
 
   private evaluateAction(
@@ -49,10 +56,12 @@ export class AuthorizationSession<
       grants: this.grants,
       subject: this.subject,
       scope: this.scope,
+      roles: this.roles,
       context: this.context,
       resource,
       action,
       resourceInstance,
+      plugins: this.plugins as readonly AuthorizationPlugin[],
     });
   }
 

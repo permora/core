@@ -22,6 +22,7 @@ Scope → Role → Inheritance → Resource → Permission → Condition → Dec
 - **Wildcard actions**: `["*"]` grants every declared action of a resource
 - **Explainability**: `session.explain()` reports which grant or condition decided
 - **Partial compilation**: sessions only compile the roles they can reach — O(reachable roles + permissions)
+- **Observer plugins**: audit, logging, metrics and tracing via `definePlugin` hooks without altering decisions
 
 ## Requirements
 
@@ -110,6 +111,53 @@ await session.allowedActions('project', project); // ['read', 'update', 'delete'
 ```
 
 Single-tenant applications can omit `scope` — sessions default to the `*` scope.
+
+### Plugins
+
+Observer plugins audit session creation and permission evaluation without changing ALLOW/DENY decisions. Register them on the engine:
+
+```typescript
+import { createAuthorization, definePlugin } from '@permora/core';
+
+const audit = definePlugin({
+  name: 'audit',
+  onSessionCreate({ subject, scope, roles }) {
+    /* session compiled */
+  },
+  onEvaluationStart({ resource, action }) {
+    /* evaluation started */
+  },
+  onGrantEvaluation({ grant, matched }) {
+    /* each grant candidate evaluated */
+  },
+  onEvaluationEnd({ allowed, reason, evaluatedGrants }) {
+    /* evaluation finished */
+  },
+  onGranted({ grantedBy }) {
+    /* allowed === true */
+  },
+  onDenied({ reason }) {
+    /* allowed === false */
+  },
+});
+
+const authz = createAuthorization({
+  resources,
+  permissions,
+  plugins: [audit],
+});
+```
+
+| Hook                | When                                                                         |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `onSessionCreate`   | After `authz.session()` compiles the session                                 |
+| `onEvaluationStart` | Start of each evaluation (`can`, `explain`, each action in `allowedActions`) |
+| `onGrantEvaluation` | After each grant candidate is evaluated                                      |
+| `onEvaluationEnd`   | End of each evaluation (allow or deny)                                       |
+| `onGranted`         | When the evaluation result is allowed                                        |
+| `onDenied`          | When the evaluation result is denied                                         |
+
+Plugins are optional; omitting `plugins` has zero overhead. Errors thrown by plugins propagate to the caller during evaluation. `onSessionCreate` runs synchronously during `authz.session()`; async handlers are scheduled without blocking session creation.
 
 ### Session API
 

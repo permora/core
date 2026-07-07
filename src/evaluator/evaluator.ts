@@ -1,9 +1,26 @@
 import { lookupGrants } from '../grants/grant-index';
+import {
+  notifyEvaluationEnd,
+  notifyGrantEvaluation,
+  runPluginHook,
+} from '../plugins/run-plugins';
 import type {
   EvaluationInput,
   EvaluationResult,
   GrantEvaluation,
 } from './evaluator.types';
+
+function evaluationHookInput(input: EvaluationInput) {
+  return {
+    subject: input.subject,
+    scope: input.scope,
+    roles: input.roles,
+    context: input.context,
+    resource: input.resource,
+    action: input.action,
+    resourceInstance: input.resourceInstance,
+  };
+}
 
 /**
  * Single evaluation path shared by `can()` and `explain()`.
@@ -18,14 +35,22 @@ import type {
 export async function evaluate(
   input: EvaluationInput,
 ): Promise<EvaluationResult> {
+  const hookInput = evaluationHookInput(input);
+  const plugins = input.plugins;
+
+  await runPluginHook(plugins, 'onEvaluationStart', hookInput);
+
   const candidates = lookupGrants(input.grants, input.resource, input.action);
 
   if (candidates.length === 0) {
-    return {
+    const result: EvaluationResult = {
       allowed: false,
       evaluatedGrants: [],
       reason: 'NO_MATCHING_GRANT',
     };
+
+    await notifyEvaluationEnd(plugins, hookInput, result);
+    return result;
   }
 
   const evaluatedGrants: GrantEvaluation[] = [];
@@ -33,12 +58,17 @@ export async function evaluate(
   for (const grant of candidates) {
     if (grant.when === undefined) {
       evaluatedGrants.push({ grant, matched: true });
-      return {
+      await notifyGrantEvaluation(plugins, hookInput, grant, true);
+
+      const result: EvaluationResult = {
         allowed: true,
         evaluatedGrants,
         grantedBy: grant,
         reason: 'GRANT_MATCHED',
       };
+
+      await notifyEvaluationEnd(plugins, hookInput, result);
+      return result;
     }
 
     const matched = await grant.when({
@@ -49,20 +79,27 @@ export async function evaluate(
     });
 
     evaluatedGrants.push({ grant, matched });
+    await notifyGrantEvaluation(plugins, hookInput, grant, matched);
 
     if (matched) {
-      return {
+      const result: EvaluationResult = {
         allowed: true,
         evaluatedGrants,
         grantedBy: grant,
         reason: 'CONDITION_MATCHED',
       };
+
+      await notifyEvaluationEnd(plugins, hookInput, result);
+      return result;
     }
   }
 
-  return {
+  const result: EvaluationResult = {
     allowed: false,
     evaluatedGrants,
     reason: 'ALL_CONDITIONS_FAILED',
   };
+
+  await notifyEvaluationEnd(plugins, hookInput, result);
+  return result;
 }

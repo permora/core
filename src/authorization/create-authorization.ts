@@ -2,6 +2,7 @@ import type {
   DefinedPermissions,
   PermissionsShape,
 } from '../permissions/permission.types';
+import type { AuthorizationPlugin } from '../plugins/plugin.types';
 import type { ResourcesShape } from '../resources/resource.types';
 import type { AnyPermissionsDefinition } from '../roles/role.types';
 import { Authorization } from './authorization';
@@ -22,6 +23,7 @@ export function createAuthorization<
 >(input: {
   resources: Resources;
   permissions: DefinedPermissions<Resources, Subject, Context, Defs>;
+  plugins?: readonly AuthorizationPlugin<Subject, Context>[];
 }): Authorization<Resources, Subject, Context, Defs> {
   const permissions = input.permissions as AnyPermissionsDefinition;
 
@@ -30,5 +32,6 @@ export function createAuthorization<
   return new Authorization<Resources, Subject, Context, Defs>(
     input.resources,
     permissions,
+    input.plugins ?? [],
   );
 }

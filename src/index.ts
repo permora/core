@@ -7,6 +7,18 @@
 
 export { createAuthorization, Authorization } from './authorization';
 
+export { definePlugin } from './plugins';
+export type {
+  AuthorizationPlugin,
+  DeniedContext,
+  EvaluationEndContext,
+  EvaluationStartContext,
+  EvaluatedGrantSnapshot,
+  GrantedContext,
+  GrantEvaluationContext,
+  SessionCreateContext,
+} from './plugins';
+
 export { defineResources } from './resources';
 export type {
   ActionOf,

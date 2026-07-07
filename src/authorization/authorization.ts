@@ -1,3 +1,5 @@
+import type { AuthorizationPlugin } from '../plugins/plugin.types';
+import { runSessionCreateHooks } from '../plugins/run-plugins';
 import type { ResourcesShape } from '../resources/resource.types';
 import type { AnyPermissionsDefinition } from '../roles/role.types';
 import { AuthorizationSession } from '../session/authorization-session';
@@ -17,10 +19,16 @@ export class Authorization<
 > {
   private readonly resources: Resources;
   private readonly permissions: AnyPermissionsDefinition;
+  private readonly plugins: readonly AuthorizationPlugin<Subject, Context>[];
 
-  constructor(resources: Resources, permissions: AnyPermissionsDefinition) {
+  constructor(
+    resources: Resources,
+    permissions: AnyPermissionsDefinition,
+    plugins: readonly AuthorizationPlugin<Subject, Context>[] = [],
+  ) {
     this.resources = resources;
     this.permissions = permissions;
+    this.plugins = plugins;
   }
 
   /**
@@ -30,16 +38,27 @@ export class Authorization<
   session(
     input: SessionInput<Defs, Subject, Context>,
   ): AuthorizationSession<Resources, Subject, Context> {
+    const context = (input as { context?: Context }).context as Context;
     const data = compileSession(this.permissions, {
       subject: input.subject,
       scope: input.scope,
       roles: input.roles,
-      context: (input as { context?: Context }).context,
+      context,
     });
 
-    return new AuthorizationSession<Resources, Subject, Context>(
+    const session = new AuthorizationSession<Resources, Subject, Context>(
       this.resources,
       data,
+      this.plugins,
     );
+
+    runSessionCreateHooks(this.plugins, {
+      subject: input.subject,
+      scope: data.scope,
+      roles: input.roles,
+      context,
+    });
+
+    return session;
   }
 }
