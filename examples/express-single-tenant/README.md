@@ -1,12 +1,13 @@
 # Express Single-Tenant Example
 
-This example shows a minimal Express API that uses the local `@permora/core`
-package for:
+This example shows a small Express API that uses the local `@permora/core`
+package with:
 
 - fake authentication via `Authorization: Bearer <token>`
 - single-tenant authorization with the implicit default scope `*`
-- `session.assert()` in middleware for 403 responses
-- `session.explain()` for decision debugging
+- manual dependency injection
+- clean-architecture style folders (`controllers`, `use-cases`, `services`, `repositories`, `middleware`)
+- unit tests for services, use-cases and controllers
 
 ## Prerequisites
 
@@ -24,7 +25,7 @@ pnpm build
 
 # then install the example dependencies
 cd examples/express-single-tenant
-pnpm install
+pnpm install --ignore-workspace
 ```
 
 ## Run
@@ -34,6 +35,49 @@ pnpm dev
 ```
 
 The API starts on `http://localhost:3001`.
+
+## Test
+
+```bash
+pnpm typecheck
+pnpm build
+pnpm test
+```
+
+## Folder structure
+
+```text
+src/
+  auth/           # permora policy + token service
+  controllers/    # HTTP adapters
+  middleware/     # Express middleware
+  repositories/   # in-memory repositories
+  services/       # shared domain/application services
+  use-cases/      # application logic and authorization orchestration
+  types/          # domain and request typing
+  container.ts    # manual DI composition
+  routes.ts       # route wiring
+  server.ts       # bootstrap only
+test/
+  controllers/
+  services/
+  use-cases/
+```
+
+## Request flow
+
+```text
+request
+  -> authenticate middleware
+  -> controller
+  -> use-case
+  -> repository / @permora/core session
+  -> response
+```
+
+Authentication happens in middleware through `AuthenticationService`.
+Authorization happens inside use-cases through the `AuthorizationSession`
+created by `@permora/core`.
 
 ## Fake users
 
@@ -119,9 +163,12 @@ curl http://localhost:3001/posts/p2/explain-delete \
 
 ## What the example demonstrates
 
-- `defineResources()` and `definePermissions()` in `src/authz.ts`
+- `defineResources()` and `definePermissions()` in `src/auth/authz.ts`
 - single-tenant `authz.session()` without passing `scope`
 - inheritance: `editor -> viewer`
 - wildcard: `admin -> ["*"]`
 - conditional permission: editor can `delete` only when `post.authorId === subject.id`
-- centralized authorization middleware using `session.assert()`
+- manual DI composition in `src/container.ts`
+- controllers with minimal HTTP adaptation
+- use-cases orchestrating authorization and repository access
+- unit tests for services, use-cases and controllers

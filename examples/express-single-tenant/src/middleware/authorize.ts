@@ -1,17 +1,8 @@
 import { AuthorizationDeniedError } from '@permora/core';
 import type { NextFunction, Request, Response } from 'express';
-import { findPostById } from '../data.js';
-import type { Post } from '../types.js';
-
-type ResourceLoader = (req: Request) => Post | undefined;
-
-function readRouteParam(value: string | string[] | undefined): string {
-  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-}
 
 export function authorize(
   action: 'read' | 'create' | 'update' | 'delete' | 'publish',
-  loadResource?: ResourceLoader,
 ) {
   return async function (
     req: Request,
@@ -26,18 +17,8 @@ export function authorize(
       return;
     }
 
-    const resource = loadResource?.(req);
-
-    if (loadResource !== undefined && resource === undefined) {
-      res.status(404).json({
-        error: 'POST_NOT_FOUND',
-        message: `Post "${req.params.id}" was not found.`,
-      });
-      return;
-    }
-
     try {
-      await req.authz.assert('post', action, resource);
+      await req.authz.assert('post', action);
       next();
     } catch (error) {
       if (error instanceof AuthorizationDeniedError) {
@@ -51,8 +32,4 @@ export function authorize(
       next(error);
     }
   };
-}
-
-export function loadPostFromParams(req: Request): Post | undefined {
-  return findPostById(readRouteParam(req.params.id));
 }

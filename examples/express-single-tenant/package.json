@@ -7,7 +7,8 @@
     "dev": "node --watch --loader ts-node/esm src/server.ts",
     "start": "node --enable-source-maps dist/server.js",
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node ../../node_modules/vitest/vitest.mjs run"
   },
   "dependencies": {
     "@permora/core": "file:../..",

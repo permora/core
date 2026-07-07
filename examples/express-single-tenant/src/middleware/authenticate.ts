@@ -1,47 +1,26 @@
+import type { AuthenticationService } from '../services/authentication.service.js';
 import type { NextFunction, Request, Response } from 'express';
-import { authz } from '../authz.js';
-import { findUserByToken } from '../data.js';
 
-function readBearerToken(header: string | undefined): string | undefined {
-  if (header === undefined) {
-    return undefined;
-  }
+export function createAuthenticateMiddleware(input: {
+  authenticationService: AuthenticationService;
+}) {
+  return function authenticate(
+    req: Request,
+    _res: Response,
+    next: NextFunction,
+  ): void {
+    req.requestId = req.header('x-request-id') ?? crypto.randomUUID();
 
-  const [scheme, token] = header.split(' ');
-  if (scheme !== 'Bearer' || token === undefined) {
-    return undefined;
-  }
+    const result = input.authenticationService.authenticateFromBearerToken(
+      req.header('authorization'),
+      req.requestId,
+    );
 
-  return token;
-}
+    if (result !== undefined) {
+      req.user = result.user;
+      req.authz = result.authz;
+    }
 
-export function authenticate(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  req.requestId = req.header('x-request-id') ?? crypto.randomUUID();
-
-  const token = readBearerToken(req.header('authorization'));
-  if (token === undefined) {
     next();
-    return;
-  }
-
-  const user = findUserByToken(token);
-  if (user === undefined) {
-    next();
-    return;
-  }
-
-  req.user = user;
-  req.authz = authz.session({
-    subject: user,
-    roles: user.roles,
-    context: {
-      requestId: req.requestId,
-    },
-  });
-
-  next();
+  };
 }

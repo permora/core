@@ -3,7 +3,9 @@ import {
   definePermissions,
   defineResources,
 } from '@permora/core';
-import type { AuthContext, Post, User } from './types.js';
+import type { AuthContext } from '../types/auth-context.js';
+import type { Post } from '../types/post.js';
+import type { User } from '../types/user.js';
 
 export const resources = defineResources({
   post: {
@@ -38,3 +40,5 @@ export const authz = createAuthorization({
   resources,
   permissions,
 });
+
+export type AppAuthorization = typeof authz;
