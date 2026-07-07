@@ -1,0 +1,51 @@
+{
+  "name": "@permora/core",
+  "version": "0.1.0",
+  "description": "TypeScript library for permission checks and management",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint:package": "publint && attw --pack --profile esm-only",
+    "verify": "pnpm format:check && pnpm typecheck && pnpm test && pnpm build && pnpm lint:package"
+  },
+  "keywords": [
+    "permissions",
+    "authorization",
+    "acl",
+    "rbac"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cicerotcv/permora.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@11.10.0",
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.4",
+    "prettier": "^3.9.4",
+    "publint": "^0.3.12",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9"
+  }
+}
