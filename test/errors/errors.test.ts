@@ -24,6 +24,18 @@ describe('UnknownRoleError', () => {
     expect(error.role).toBe('ghost');
     expect(error.message).toContain('ghost');
     expect(error.message).toContain('org:acme');
+    expect(error.message).toContain('fallback');
+  });
+
+  it('omits fallback hint when fallback is disabled', () => {
+    const strictError = new UnknownRoleError({
+      scope: 'org:acme',
+      role: 'ghost',
+      fallbackEnabled: false,
+    });
+
+    expect(strictError.message).not.toContain('fallback');
+    expect(strictError.message).not.toContain('"*"');
   });
 
   it('has the class name as error name', () => {

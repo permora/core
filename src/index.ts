@@ -64,3 +64,10 @@ export {
   InvalidPermissionDefinitionError,
   UnknownRoleError,
 } from './errors';
+
+export {
+  DEFAULT_SCOPE_RESOLUTION,
+  mergeRoleDefinitions,
+  normalizeScopeResolution,
+} from './roles';
+export type { ScopeResolutionOptions } from './roles';

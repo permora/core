@@ -61,6 +61,38 @@ A session with `scope: 'org:arasaka'` and `roles: ['admin']` gets `invoice:appro
 - Use `extends` with a distinct base role name (avoid `admin extends admin` cycles).
 - Repeat permissions explicitly when a scoped override is intentional.
 
+#### Scope resolution
+
+By default, scoped resolution uses per-role fallback to `*` and full override when a role exists in both scopes (see above). Configure this at engine creation via `createAuthorization({ scopeResolution })`:
+
+```typescript
+const authz = createAuthorization({
+  resources,
+  permissions,
+  scopeResolution: {
+    fallback: true, // default — use *.role when missing in session scope
+    merge: false,   // default — specific role replaces *.role entirely
+  },
+});
+```
+
+| `fallback` | `merge` | Behavior |
+|:---:|:---:|---|
+| `true` | `false` | Default — per-role fallback; specific replaces `*` entirely |
+| `true` | `true` | Fallback when absent; merge `*.role` + `scope.role` when both exist |
+| `false` | `false` | Strict — only roles defined in the session scope |
+| `false` | `true` | No fallback; merge when both exist in the session scope |
+
+```typescript
+// Strict: roles must be defined in the tenant scope
+createAuthorization({ resources, permissions, scopeResolution: { fallback: false } });
+
+// Merge: combine default + scoped admin definitions
+createAuthorization({ resources, permissions, scopeResolution: { merge: true } });
+```
+
+When `merge: true`, `extends` and permission arrays are combined (OR semantics at evaluation). Parent roles referenced via merged `extends` are still resolved with the same `scopeResolution` flags.
+
 Normative details in [SPEC.md](./SPEC.md) (sections 8–9).
 
 ## Requirements

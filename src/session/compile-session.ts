@@ -2,7 +2,11 @@ import { createGrantIndex } from '../grants/grant-index';
 import type { GrantIndex } from '../grants/grant.types';
 import { DEFAULT_SCOPE } from '../permissions/constants';
 import { collectRoleGraph } from '../roles/inheritance-resolver';
-import type { AnyPermissionsDefinition } from '../roles/role.types';
+import type {
+  AnyPermissionsDefinition,
+  ScopeResolutionOptions,
+} from '../roles/role.types';
+import { DEFAULT_SCOPE_RESOLUTION } from '../roles/role.types';
 
 export type CompiledSessionData = {
   readonly subject: unknown;
@@ -31,10 +35,16 @@ export type RawSessionInput = {
 export function compileSession(
   permissions: AnyPermissionsDefinition,
   input: RawSessionInput,
+  scopeResolution: Required<ScopeResolutionOptions> = DEFAULT_SCOPE_RESOLUTION,
 ): CompiledSessionData {
   const scope = input.scope ?? DEFAULT_SCOPE;
 
-  const resolvedRoles = collectRoleGraph(permissions, scope, input.roles);
+  const resolvedRoles = collectRoleGraph(
+    permissions,
+    scope,
+    input.roles,
+    scopeResolution,
+  );
 
   return {
     subject: input.subject,

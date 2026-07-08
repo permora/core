@@ -5,7 +5,11 @@ import type {
   PermissionsShape,
 } from '../permissions/permission.types';
 import type { ResourcesShape } from '../resources/resource.types';
-import type { AnyPermissionsDefinition } from '../roles/role.types';
+import { normalizeScopeResolution } from '../roles/normalize-scope-resolution';
+import type {
+  AnyPermissionsDefinition,
+  ScopeResolutionOptions,
+} from '../roles/role.types';
 import { AuthorizationSession } from '../session/authorization-session';
 import { compileSession } from '../session/compile-session';
 import type { SessionInput } from '../session/session.types';
@@ -30,15 +34,18 @@ export class Authorization<
   private readonly resources: Resources;
   private readonly permissions: AnyPermissionsDefinition;
   private readonly plugins: readonly AuthorizationPlugin<Subject, Context>[];
+  private readonly scopeResolution: Required<ScopeResolutionOptions>;
 
   constructor(
     resources: Resources,
     permissions: AnyPermissionsDefinition,
     plugins: readonly AuthorizationPlugin<Subject, Context>[] = [],
+    scopeResolution?: ScopeResolutionOptions,
   ) {
     this.resources = resources;
     this.permissions = permissions;
     this.plugins = plugins;
+    this.scopeResolution = normalizeScopeResolution(scopeResolution);
   }
 
   /**
@@ -49,12 +56,16 @@ export class Authorization<
     input: SessionInput<Meta, Subject, Context>,
   ): AuthorizationSession<Resources, Subject, Context> {
     const context = (input as { context?: Context }).context as Context;
-    const data = compileSession(this.permissions, {
-      subject: input.subject,
-      scope: input.scope,
-      roles: input.roles,
-      context,
-    });
+    const data = compileSession(
+      this.permissions,
+      {
+        subject: input.subject,
+        scope: input.scope,
+        roles: input.roles,
+        context,
+      },
+      this.scopeResolution,
+    );
 
     const session = new AuthorizationSession<Resources, Subject, Context>(
       this.resources,

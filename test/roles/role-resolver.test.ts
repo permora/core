@@ -68,4 +68,56 @@ describe('resolveRole', () => {
 
     expect(resolved?.sourceScope).toBe('*');
   });
+
+  describe('scopeResolution', () => {
+    it('merge: true combines default and specific definitions', () => {
+      const resolved = resolveRole(permissions, 'org:acme', 'editor', {
+        fallback: true,
+        merge: true,
+      });
+
+      expect(resolved?.sourceScope).toBe('org:acme');
+      expect(resolved?.definition.extends).toEqual(['viewer']);
+      expect(resolved?.definition['project']).toEqual(['read', 'update', 'read']);
+    });
+
+    it('fallback: false returns undefined when role is missing in scope', () => {
+      expect(
+        resolveRole(permissions, 'org:acme', 'viewer', {
+          fallback: false,
+          merge: false,
+        }),
+      ).toBeUndefined();
+    });
+
+    it('fallback: false still resolves roles defined in the scope', () => {
+      const resolved = resolveRole(permissions, 'org:acme', 'manager', {
+        fallback: false,
+        merge: false,
+      });
+
+      expect(resolved?.sourceScope).toBe('org:acme');
+      expect(resolved?.definition).toBe(permissions['org:acme'].manager);
+    });
+
+    it('fallback: false + merge: true merges when both exist', () => {
+      const resolved = resolveRole(permissions, 'org:acme', 'editor', {
+        fallback: false,
+        merge: true,
+      });
+
+      expect(resolved?.sourceScope).toBe('org:acme');
+      expect(resolved?.definition.extends).toEqual(['viewer']);
+      expect(resolved?.definition['project']).toEqual(['read', 'update', 'read']);
+    });
+
+    it('ignores flags when scope is "*"', () => {
+      const resolved = resolveRole(permissions, '*', 'editor', {
+        fallback: false,
+        merge: true,
+      });
+
+      expect(resolved?.definition).toBe(permissions['*'].editor);
+    });
+  });
 });

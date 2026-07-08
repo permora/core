@@ -1,7 +1,12 @@
 import { CircularRoleInheritanceError } from '../errors/circular-role-inheritance-error';
 import { UnknownRoleError } from '../errors/unknown-role-error';
 import { resolveRole } from './role-resolver';
-import type { AnyPermissionsDefinition, ResolvedRole } from './role.types';
+import type {
+  AnyPermissionsDefinition,
+  ResolvedRole,
+  ScopeResolutionOptions,
+} from './role.types';
+import { DEFAULT_SCOPE_RESOLUTION } from './role.types';
 
 /**
  * Walks the inheritance graph starting from the input roles and returns
@@ -18,6 +23,7 @@ export function collectRoleGraph(
   permissions: AnyPermissionsDefinition,
   scope: string,
   roles: readonly string[],
+  scopeResolution: Required<ScopeResolutionOptions> = DEFAULT_SCOPE_RESOLUTION,
 ): ResolvedRole[] {
   const visited = new Set<string>();
   const collected: ResolvedRole[] = [];
@@ -36,9 +42,13 @@ export function collectRoleGraph(
       return;
     }
 
-    const resolved = resolveRole(permissions, scope, role);
+    const resolved = resolveRole(permissions, scope, role, scopeResolution);
     if (resolved === undefined) {
-      throw new UnknownRoleError({ scope, role });
+      throw new UnknownRoleError({
+        scope,
+        role,
+        fallbackEnabled: scopeResolution.fallback,
+      });
     }
 
     visited.add(role);

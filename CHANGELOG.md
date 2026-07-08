@@ -25,12 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Error hierarchy with stable codes (`AUTHZ_UNKNOWN_ROLE`, `AUTHZ_CIRCULAR_ROLE_INHERITANCE`, `AUTHZ_DENIED`, `AUTHZ_INVALID_PERMISSION_DEFINITION`)
 - Observer plugins via `definePlugin` and `createAuthorization({ plugins })` with hooks: `onSessionCreate`, `onEvaluationStart`, `onGrantEvaluation`, `onEvaluationEnd`, `onGranted`, `onDenied`
 - `ResourceConfigFor<Resource>` helper type; documentation for strongly typed resource names using `as const` maps or string enums
+- `createAuthorization({ scopeResolution })` to control scoped role resolution: `fallback` (per-role fallback to `*`, default `true`) and `merge` (combine `*.role` with `scope.role` when both exist, default `false`)
+- `ScopeResolutionOptions`, `DEFAULT_SCOPE_RESOLUTION`, `mergeRoleDefinitions` and `normalizeScopeResolution` exports for scoped resolution tooling
 
 ### Changed
 
 - `definePermissions` is now a generic factory (`definePermissions<User>()`) rather than accepting `resources` as its first runtime argument in a single call
 - README and SPEC examples updated for the builder pattern, `defineResource`, and typed resource name conventions
 - `scopedPermissions({ separator })` is only applied when `nested: true`; in flat mode scope keys must be written exactly as they appear at runtime
+- `UnknownRoleError` message omits the default-scope fallback hint when `scopeResolution.fallback` is `false`
 
 ### Deprecated
 

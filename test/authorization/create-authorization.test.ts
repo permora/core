@@ -116,4 +116,19 @@ describe('createAuthorization', () => {
       authz.session({ subject: { id: 'u1' }, roles: ['ghost'] }),
     ).toThrow(UnknownRoleError);
   });
+
+  it('accepts scopeResolution options', () => {
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(resources, {
+      viewer: { project: ['read'] },
+    });
+
+    const authz = createAuthorization({
+      resources,
+      permissions,
+      scopeResolution: { fallback: false, merge: true },
+    });
+
+    expect(authz).toBeDefined();
+  });
 });
