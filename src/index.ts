@@ -19,23 +19,37 @@ export type {
   SessionCreateContext,
 } from './plugins';
 
-export { defineResources } from './resources';
+export { defineResource, defineResources } from './resources';
 export type {
   ActionOf,
   InstanceOf,
   ResourceConfig,
+  ResourceConfigFor,
   ResourceName,
   ResourcesShape,
 } from './resources';
 
-export { definePermissions, DEFAULT_SCOPE } from './permissions';
+export {
+  definePermissionInterpreter,
+  definePermissions,
+  DEFAULT_SCOPE,
+} from './permissions';
 export type {
   Condition,
   ConditionInput,
   DefinedPermissions,
+  DefinePermissionsOptions,
+  InterpretContext,
   Permission,
+  PermissionBuilder,
+  PermissionDefinitionInterpreter,
+  PermissionsMeta,
+  PermissionsMetaOf,
+  PermissionsMode,
   PermissionsShape,
   RoleDefinition,
+  RoleMap,
+  SingleTenantPermissionsInput,
 } from './permissions';
 
 export { AuthorizationSession } from './session';

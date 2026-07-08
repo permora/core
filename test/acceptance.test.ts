@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createAuthorization,
   definePermissions,
+  defineResource,
   defineResources,
 } from '../src/index';
 
@@ -14,17 +15,18 @@ type Project = { id: string; ownerId: string };
 type Invoice = { id: string; amount: number };
 
 const resources = defineResources({
-  project: {
+  project: defineResource<Project>({
     actions: ['read', 'update', 'delete'],
-    resource: {} as Project,
-  },
-  invoice: {
+  }),
+  invoice: defineResource<Invoice>({
     actions: ['read', 'approve'],
-    resource: {} as Invoice,
-  },
+  }),
 });
 
-const permissions = definePermissions<User, Record<string, never>>()(
+import { scopedPermissions } from '../src/scoped';
+
+const permissionBuilder = definePermissions<User, Record<string, never>>();
+const permissions = permissionBuilder(
   resources,
   {
     '*': {
@@ -60,6 +62,7 @@ const permissions = definePermissions<User, Record<string, never>>()(
       },
     },
   },
+  { resolver: scopedPermissions() },
 );
 
 const authz = createAuthorization({ resources, permissions });

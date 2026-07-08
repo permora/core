@@ -3,6 +3,7 @@ import {
   AuthorizationDeniedError,
   createAuthorization,
   definePermissions,
+  defineResource,
   defineResources,
 } from '../src/index';
 
@@ -10,31 +11,29 @@ type User = { id: string };
 type Post = { id: string; authorId: string; published: boolean };
 
 const resources = defineResources({
-  post: {
+  post: defineResource<Post>({
     actions: ['read', 'create', 'update', 'delete', 'publish'],
-    resource: {} as Post,
-  },
+  }),
 });
 
-const permissions = definePermissions<User>()(resources, {
-  '*': {
-    viewer: {
-      post: ['read'],
-    },
-    editor: {
-      extends: ['viewer'],
-      post: [
-        'create',
-        'update',
-        {
-          action: 'delete',
-          when: ({ subject, resource }) => resource.authorId === subject.id,
-        },
-      ],
-    },
-    admin: {
-      post: ['*'],
-    },
+const permissionBuilder = definePermissions<User>();
+const permissions = permissionBuilder(resources, {
+  viewer: {
+    post: ['read'],
+  },
+  editor: {
+    extends: ['viewer'],
+    post: [
+      'create',
+      'update',
+      {
+        action: 'delete',
+        when: ({ subject, resource }) => resource.authorId === subject.id,
+      },
+    ],
+  },
+  admin: {
+    post: ['*'],
   },
 });
 
@@ -63,7 +62,9 @@ describe('single-tenant authorization', () => {
     });
 
     await expect(session.can('post', 'delete', ownDraft)).resolves.toBe(true);
-    await expect(session.can('post', 'delete', otherDraft)).resolves.toBe(false);
+    await expect(session.can('post', 'delete', otherDraft)).resolves.toBe(
+      false,
+    );
   });
 
   it('returns a useful denial explanation when the condition fails', async () => {

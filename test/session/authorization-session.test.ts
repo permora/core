@@ -2,60 +2,65 @@ import { describe, expect, it } from 'vitest';
 import { createAuthorization } from '../../src/authorization';
 import { AuthorizationDeniedError } from '../../src/errors';
 import { definePermissions } from '../../src/permissions';
-import { defineResources } from '../../src/resources';
+import { defineResource, defineResources } from '../../src/resources';
 
 type User = { id: string; approvalLimit: number };
 type Project = { id: string; ownerId: string };
 type Invoice = { id: string; amount: number };
 
 const resources = defineResources({
-  project: {
+  project: defineResource<Project>({
     actions: ['read', 'update', 'delete'],
-    resource: {} as Project,
-  },
-  invoice: {
+  }),
+  invoice: defineResource<Invoice>({
     actions: ['read', 'approve'],
-    resource: {} as Invoice,
-  },
+  }),
 });
 
-const permissions = definePermissions<User>()(resources, {
-  '*': {
-    viewer: {
-      project: ['read'],
+import { scopedPermissions } from '../../src/scoped';
+
+const permissionBuilder = definePermissions<User>();
+const permissions = permissionBuilder(
+  resources,
+  {
+    '*': {
+      viewer: {
+        project: ['read'],
+      },
+      editor: {
+        extends: ['viewer'],
+        project: [
+          'update',
+          {
+            action: 'delete',
+            when: ({ subject, resource }) => resource.ownerId === subject.id,
+          },
+        ],
+      },
+      admin: {
+        project: ['*'],
+      },
     },
-    editor: {
-      extends: ['viewer'],
-      project: [
-        'update',
-        {
-          action: 'delete',
-          when: ({ subject, resource }) => resource.ownerId === subject.id,
-        },
-      ],
-    },
-    admin: {
-      project: ['*'],
+    'org:acme': {
+      editor: {
+        extends: ['viewer'],
+        project: ['read', 'update', 'delete'],
+      },
+      manager: {
+        extends: ['editor'],
+        invoice: [
+          'read',
+          {
+            action: 'approve',
+            when: ({ subject, resource }) =>
+              resource.amount <= subject.approvalLimit,
+          },
+        ],
+      },
     },
   },
-  'org:acme': {
-    editor: {
-      extends: ['viewer'],
-      project: ['read', 'update', 'delete'],
-    },
-    manager: {
-      extends: ['editor'],
-      invoice: [
-        'read',
-        {
-          action: 'approve',
-          when: ({ subject, resource }) =>
-            resource.amount <= subject.approvalLimit,
-        },
-      ],
-    },
-  },
-});
+  { resolver: scopedPermissions() },
+);
 
 const authz = createAuthorization({ resources, permissions });
 

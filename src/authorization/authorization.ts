@@ -1,5 +1,9 @@
 import type { AuthorizationPlugin } from '../plugins/plugin.types';
 import { runSessionCreateHooks } from '../plugins/run-plugins';
+import type {
+  PermissionsMeta,
+  PermissionsShape,
+} from '../permissions/permission.types';
 import type { ResourcesShape } from '../resources/resource.types';
 import type { AnyPermissionsDefinition } from '../roles/role.types';
 import { AuthorizationSession } from '../session/authorization-session';
@@ -15,7 +19,13 @@ export class Authorization<
   Resources extends ResourcesShape,
   Subject,
   Context,
-  Defs,
+  Meta extends PermissionsMeta<
+    Resources,
+    Subject,
+    Context,
+    'single-tenant' | 'scoped',
+    PermissionsShape<Resources, Subject, Context>
+  >,
 > {
   private readonly resources: Resources;
   private readonly permissions: AnyPermissionsDefinition;
@@ -36,7 +46,7 @@ export class Authorization<
    * subject + scope + roles + context. Scope defaults to `"*"`.
    */
   session(
-    input: SessionInput<Defs, Subject, Context>,
+    input: SessionInput<Meta, Subject, Context>,
   ): AuthorizationSession<Resources, Subject, Context> {
     const context = (input as { context?: Context }).context as Context;
     const data = compileSession(this.permissions, {

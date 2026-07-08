@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { defineResources } from '../../src/resources';
+import { defineResource, defineResources } from '../../src/resources';
 
 type Project = { id: string; ownerId: string };
 
 describe('defineResources', () => {
   it('returns the definition unchanged', () => {
     const definition = {
-      project: {
+      project: defineResource<Project>({
         actions: ['create', 'read'],
-        resource: {} as Project,
-      },
+      }),
     };
 
     const resources = defineResources(definition);
@@ -20,10 +19,21 @@ describe('defineResources', () => {
 
   it('supports multiple resources', () => {
     const resources = defineResources({
-      project: { actions: ['read'], resource: {} as Project },
-      invoice: { actions: ['read', 'approve'], resource: {} },
+      project: defineResource<Project>({ actions: ['read'] }),
+      invoice: defineResource<{ id: string }>({ actions: ['read', 'approve'] }),
     });
 
     expect(Object.keys(resources)).toEqual(['project', 'invoice']);
+  });
+});
+
+describe('defineResource', () => {
+  it('declares actions and phantom instance type', () => {
+    const project = defineResource<Project>({
+      actions: ['read', 'update'],
+    });
+
+    expect(project.actions).toEqual(['read', 'update']);
+    expect(project.resource).toBeUndefined();
   });
 });

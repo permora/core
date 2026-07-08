@@ -3,6 +3,7 @@ import {
   createAuthorization,
   definePermissions,
   definePlugin,
+  defineResource,
   defineResources,
 } from '../../src/index';
 
@@ -10,25 +11,23 @@ type User = { id: string };
 type Project = { id: string; ownerId: string };
 
 const resources = defineResources({
-  project: {
+  project: defineResource<Project>({
     actions: ['read', 'update', 'delete'],
-    resource: {} as Project,
-  },
+  }),
 });
 
-const permissions = definePermissions<User>()(resources, {
-  '*': {
-    viewer: { project: ['read'] },
-    editor: {
-      extends: ['viewer'],
-      project: [
-        'update',
-        {
-          action: 'delete',
-          when: ({ subject, resource }) => resource.ownerId === subject.id,
-        },
-      ],
-    },
+const permissionBuilder = definePermissions<User>();
+const permissions = permissionBuilder(resources, {
+  viewer: { project: ['read'] },
+  editor: {
+    extends: ['viewer'],
+    project: [
+      'update',
+      {
+        action: 'delete',
+        when: ({ subject, resource }) => resource.ownerId === subject.id,
+      },
+    ],
   },
 });
 

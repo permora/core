@@ -16,13 +16,52 @@ Scope → Role → Inheritance → Resource → Permission → Condition → Dec
 
 - **Type-safe**: resources, actions, resource instances, subject and context are fully inferred; invalid actions fail at compile time
 - **Default deny**: nothing is allowed unless explicitly granted
-- **Scopes**: generic namespaces (`*`, `org:acme`, `project:123`) with per-role fallback to the default scope `*`
+- **Single-tenant by default**: define roles directly — no scope wrapper required
+- **Scopes (multi-tenant)**: opt-in via `@permora/core/scoped` — tenant namespaces (`*`, `org:acme`, `project:123`) with per-role fallback
 - **Role inheritance**: transitive `extends` with cycle detection, resolved per scope
 - **Conditions**: sync or async `when` predicates receiving `{ subject, scope, resource, context }`
 - **Wildcard actions**: `["*"]` grants every declared action of a resource
 - **Explainability**: `session.explain()` reports which grant or condition decided
 - **Partial compilation**: sessions only compile the roles they can reach — O(reachable roles + permissions)
+- **Permission definition resolvers**: extend how permissions are declared via `definePermissions(..., { resolver })`
 - **Observer plugins**: audit, logging, metrics and tracing via `definePlugin` hooks without altering decisions
+
+### Scopes (multi-tenant)
+
+Single-tenant apps use `definePermissions()` with roles only — see [Usage](#usage). Multi-tenant apps import `scopedPermissions` from `@permora/core/scoped` (tree-shakeable subpath).
+
+Defining a role in a specific scope uses **only** that definition — there is no merge with `*`, and permissions are not borrowed per resource from the default scope.
+
+Resolution follows:
+
+```text
+permissions[scope]?.[role] ?? permissions["*"]?.[role]
+```
+
+Fallback to `*` happens **per role name**: if `org:acme` has no `viewer`, `*.viewer` is used. If `org:acme` **does** define `admin`, the entire `*.admin` definition is ignored.
+
+**Common mistake** — assuming a scoped role adds permissions on top of the default:
+
+```typescript
+{
+  '*': {
+    admin: { user: ['read'] },
+  },
+  'org:arasaka': {
+    admin: { invoice: ['approve'] }, // replaces *.admin entirely
+  },
+}
+```
+
+A session with `scope: 'org:arasaka'` and `roles: ['admin']` gets `invoice:approve` only — not `user:read`.
+
+**Safe patterns:**
+
+- Omit the role from the scope when the `*` definition is enough.
+- Use `extends` with a distinct base role name (avoid `admin extends admin` cycles).
+- Repeat permissions explicitly when a scoped override is intentional.
+
+Normative details in [SPEC.md](./SPEC.md) (sections 8–9).
 
 ## Requirements
 
@@ -42,6 +81,7 @@ npm install @permora/core
 import {
   createAuthorization,
   definePermissions,
+  defineResource,
   defineResources,
 } from '@permora/core';
 
@@ -50,50 +90,126 @@ type Project = { id: string; ownerId: string };
 type Invoice = { id: string; amount: number };
 
 const resources = defineResources({
-  project: {
+  project: defineResource<Project>({
     actions: ['read', 'update', 'delete'],
-    resource: {} as Project,
-  },
-  invoice: {
+  }),
+  invoice: defineResource<Invoice>({
     actions: ['read', 'approve'],
-    resource: {} as Invoice,
+  }),
+});
+
+const permissionBuilder = definePermissions<User>();
+const permissions = permissionBuilder(resources, {
+  viewer: {
+    project: ['read'],
+  },
+  editor: {
+    extends: ['viewer'],
+    project: [
+      'update',
+      {
+        action: 'delete',
+        when: ({ subject, resource }) => resource.ownerId === subject.id,
+      },
+    ],
   },
 });
 
-const permissions = definePermissions<User>()(resources, {
-  '*': {
-    viewer: {
-      project: ['read'],
-    },
-    editor: {
-      extends: ['viewer'],
-      project: [
-        'update',
-        {
-          action: 'delete',
-          when: ({ subject, resource }) => resource.ownerId === subject.id,
-        },
-      ],
-    },
-  },
-  'org:acme': {
-    editor: {
-      extends: ['viewer'],
-      project: ['read', 'update', 'delete'],
-    },
-    manager: {
-      extends: ['editor'],
-      invoice: [
-        'read',
-        {
-          action: 'approve',
-          when: ({ subject, resource }) =>
-            resource.amount <= subject.approvalLimit,
-        },
-      ],
-    },
-  },
+const authz = createAuthorization({ resources, permissions });
+
+const session = authz.session({
+  subject: { id: 'user_123', approvalLimit: 10_000 },
+  roles: ['editor'],
 });
+
+await session.can('project', 'read'); // true (editor → viewer)
+await session.can('project', 'delete', project); // true when owner
+await session.assert('invoice', 'approve', invoice); // throws AuthorizationDeniedError
+await session.explain('project', 'delete', project); // { allowed, grantedBy, reason, ... }
+await session.allowedActions('project', project); // ['read', 'update', 'delete']
+```
+
+Single-tenant applications omit `scope` — sessions default to the implicit `*` scope.
+
+### Strongly typed resource names
+
+Use a single source of truth for resource name strings so `session.can()` and permission definitions stay in sync at compile time.
+
+**Recommended — `as const` map:**
+
+```typescript
+export const ResourceNames = {
+  Project: 'project',
+  Invoice: 'invoice',
+} as const;
+
+const resources = defineResources({
+  [ResourceNames.Project]: defineResource<Project>({
+    actions: ['read', 'update', 'delete'],
+  }),
+  [ResourceNames.Invoice]: defineResource<Invoice>({
+    actions: ['read', 'approve'],
+  }),
+});
+
+// ResourceName<typeof resources> === 'project' | 'invoice'
+await session.can(ResourceNames.Project, 'read');
+await session.can(ResourceNames.Invoice, 'approve', invoice);
+```
+
+**Alternative — string enum:**
+
+```typescript
+export enum ResourceName {
+  Project = 'project',
+  Invoice = 'invoice',
+}
+
+const resources = defineResources({
+  [ResourceName.Project]: defineResource<Project>({ actions: ['read'] }),
+  [ResourceName.Invoice]: defineResource<Invoice>({ actions: ['read'] }),
+});
+```
+
+Prefer string enums over numeric enums (numeric enums break `keyof` inference). The `as const` map is generally preferable: no reverse mapping, better tree-shaking, and aligned with idiomatic TypeScript in this library.
+
+The legacy `{ actions, resource: {} as T }` shape remains supported for backward compatibility.
+
+### Multi-tenant
+
+Import the scoped interpreter from the tree-shakeable subpath:
+
+```typescript
+import { scopedPermissions } from '@permora/core/scoped';
+
+const permissionBuilder = definePermissions<User>();
+const permissions = permissionBuilder(
+  resources,
+  {
+    '*': {
+      viewer: { project: ['read'] },
+    },
+    // org:acme.editor fully replaces *.editor (no merge)
+    'org:acme': {
+      editor: {
+        extends: ['viewer'],
+        project: ['read', 'update', 'delete'],
+      },
+      manager: {
+        extends: ['editor'],
+        invoice: [
+          'read',
+          {
+            action: 'approve',
+            when: ({ subject, resource }) =>
+              resource.amount <= subject.approvalLimit,
+          },
+        ],
+      },
+    },
+  },
+  { resolver: scopedPermissions() },
+);
 
 const authz = createAuthorization({ resources, permissions });
 
@@ -105,14 +221,51 @@ const session = authz.session({
 
 await session.can('project', 'read'); // true (manager → editor → viewer)
 await session.can('project', 'delete', project); // true (org:acme editor override)
-await session.assert('invoice', 'approve', invoice); // resolves or throws AuthorizationDeniedError
-await session.explain('project', 'delete', project); // { allowed, grantedBy, reason, ... }
-await session.allowedActions('project', project); // ['read', 'update', 'delete']
 ```
 
-Single-tenant applications can omit `scope` — sessions default to the `*` scope.
+Nested scope trees are supported via `scopedPermissions({ nested: true })`:
 
-### Plugins
+```typescript
+const permissionBuilder = definePermissions<User>();
+permissionBuilder(
+  resources,
+  {
+    arasaka: {
+      staging: { admin: { invoice: ['create', 'read'] } },
+    },
+  },
+  { resolver: scopedPermissions({ nested: true }) },
+);
+// → canonical scope "arasaka:staging"
+```
+
+### Permission definition resolvers
+
+Transform custom permission formats before the engine sees them. Resolvers run once at definition time (not per evaluation).
+
+```typescript
+import { definePermissionInterpreter, definePermissions } from '@permora/core';
+
+const myResolver = definePermissionInterpreter({
+  name: 'my-format',
+  interpret(input, { resources }) {
+    return toCanonicalShape(input); // scope → role → roleDefinition
+  },
+});
+
+const permissionBuilder = definePermissions<User>();
+const permissions = permissionBuilder(resources, customInput, {
+  resolver: myResolver,
+});
+```
+
+|                   | Observer plugin (`definePlugin`)   | Definition resolver (`definePermissionInterpreter`) |
+| ----------------- | ---------------------------------- | --------------------------------------------------- |
+| Phase             | Evaluation (per check)             | Definition (once)                                   |
+| Registration      | `createAuthorization({ plugins })` | `definePermissions(..., { resolver })`              |
+| Alters decisions? | No                                 | Transforms input only                               |
+
+### Plugins (evaluation)
 
 Observer plugins audit session creation and permission evaluation without changing ALLOW/DENY decisions. Register them on the engine:
 

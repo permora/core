@@ -60,36 +60,72 @@ export type RoleDefinition<
 };
 
 /**
- * Shape accepted by `definePermissions()`: scope → role → role definition.
+ * Map of role name → role definition (single-tenant input shape).
+ */
+export type RoleMap<Resources extends ResourcesShape, Subject, Context> = {
+  readonly [role: string]: RoleDefinition<Resources, Subject, Context>;
+};
+
+/**
+ * Canonical internal shape: scope → role → role definition.
  */
 export type PermissionsShape<
   Resources extends ResourcesShape,
   Subject,
   Context,
 > = {
-  readonly [scope: string]: {
-    readonly [role: string]: RoleDefinition<Resources, Subject, Context>;
-  };
+  readonly [scope: string]: RoleMap<Resources, Subject, Context>;
 };
+
+/**
+ * Default input of `definePermissions()` for single-tenant apps.
+ */
+export type SingleTenantPermissionsInput<
+  Resources extends ResourcesShape,
+  Subject,
+  Context,
+> = RoleMap<Resources, Subject, Context>;
+
+export type PermissionsMode = 'single-tenant' | 'scoped';
 
 declare const permissionsMeta: unique symbol;
 
 /**
- * Result of `definePermissions()`. At runtime it is exactly the definition
- * object; the phantom `permissionsMeta` property carries the `Resources`,
- * `Subject` and `Context` types so `createAuthorization()` can recover them.
+ * Phantom metadata carried by `DefinedPermissions` for session type inference.
+ */
+export type PermissionsMeta<
+  Resources extends ResourcesShape,
+  Subject,
+  Context,
+  Mode extends PermissionsMode,
+  Defs extends PermissionsShape<Resources, Subject, Context>,
+> = {
+  readonly resources: Resources;
+  readonly subject: Subject;
+  readonly context: Context;
+  readonly mode: Mode;
+  readonly defs: Defs;
+};
+
+/**
+ * Result of `definePermissions()`. At runtime it is the canonical
+ * `scope → role → roleDefinition` object; the phantom `permissionsMeta`
+ * property carries type metadata for `createAuthorization()`.
  */
 export type DefinedPermissions<
   Resources extends ResourcesShape,
   Subject,
   Context,
   Defs extends PermissionsShape<Resources, Subject, Context>,
+  Mode extends PermissionsMode = 'scoped',
 > = Defs & {
-  readonly [permissionsMeta]?: {
-    resources: Resources;
-    subject: Subject;
-    context: Context;
-  };
+  readonly [permissionsMeta]?: PermissionsMeta<
+    Resources,
+    Subject,
+    Context,
+    Mode,
+    Defs
+  >;
 };
 
 /**

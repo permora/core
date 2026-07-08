@@ -1,12 +1,20 @@
 /**
  * Configuration of a single protected resource type.
  *
- * `resource` carries only the TypeScript type of the runtime instance
- * (declared via `{} as MyType`); its value is never read.
+ * Prefer `defineResource<MyType>({ actions })` over manually setting
+ * `resource: {} as MyType` — the instance value is never read at runtime.
  */
 export type ResourceConfig = {
   readonly actions: readonly string[];
   readonly resource: unknown;
+};
+
+/**
+ * Resource configuration with a concrete instance type.
+ */
+export type ResourceConfigFor<Resource> = {
+  readonly actions: readonly string[];
+  readonly resource: Resource;
 };
 
 /**

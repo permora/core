@@ -1,28 +1,30 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_SCOPE } from '../../src/permissions/constants';
 import { definePermissions } from '../../src/permissions';
-import { defineResources } from '../../src/resources';
+import { defineResource, defineResources } from '../../src/resources';
 
 type User = { id: string };
 type Project = { id: string; ownerId: string };
 
 const resources = defineResources({
-  project: {
+  project: defineResource<Project>({
     actions: ['read', 'update', 'delete'],
-    resource: {} as Project,
-  },
+  }),
 });
 
 describe('definePermissions', () => {
-  it('returns the definition object unchanged', () => {
+  it('normalizes single-tenant roles under the default scope', () => {
     const definition = {
-      '*': {
-        viewer: { project: ['read'] },
-      },
+      viewer: { project: ['read'] },
     } as const;
 
-    const permissions = definePermissions<User>()(resources, definition);
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(resources, definition);
 
-    expect(permissions).toBe(definition);
+    expect(permissions).toEqual({
+      [DEFAULT_SCOPE]: definition,
+    });
+    expect(permissions[DEFAULT_SCOPE]).toBe(definition);
   });
 
   it('preserves conditional permissions and extends', () => {
@@ -34,17 +36,16 @@ describe('definePermissions', () => {
       resource: Project;
     }) => resource.ownerId === subject.id;
 
-    const permissions = definePermissions<User>()(resources, {
-      '*': {
-        viewer: { project: ['read'] },
-        editor: {
-          extends: ['viewer'],
-          project: ['update', { action: 'delete', when }],
-        },
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(resources, {
+      viewer: { project: ['read'] },
+      editor: {
+        extends: ['viewer'],
+        project: ['update', { action: 'delete', when }],
       },
     });
 
-    const editor = permissions['*'].editor;
+    const editor = permissions[DEFAULT_SCOPE].editor;
     expect(editor.extends).toEqual(['viewer']);
     expect(editor.project).toHaveLength(2);
     expect(editor.project?.[1]).toEqual({ action: 'delete', when });

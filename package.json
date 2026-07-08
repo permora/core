@@ -12,6 +12,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./scoped": {
+      "types": "./dist/scoped.d.ts",
+      "import": "./dist/scoped.js"
     }
   },
   "scripts": {

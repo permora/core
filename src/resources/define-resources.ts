@@ -8,11 +8,18 @@ import type { ResourcesShape } from './resource.types';
  * requiring `as const` at the call site.
  *
  * @example
+ * export const ResourceNames = {
+ *   Project: 'project',
+ *   Invoice: 'invoice',
+ * } as const;
+ *
  * const resources = defineResources({
- *   project: {
+ *   [ResourceNames.Project]: defineResource<Project>({
  *     actions: ['create', 'read', 'update', 'delete'],
- *     resource: {} as Project,
- *   },
+ *   }),
+ *   [ResourceNames.Invoice]: defineResource<Invoice>({
+ *     actions: ['read', 'approve'],
+ *   }),
  * });
  */
 export function defineResources<const Resources extends ResourcesShape>(

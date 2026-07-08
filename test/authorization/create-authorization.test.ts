@@ -5,22 +5,22 @@ import {
   UnknownRoleError,
 } from '../../src/errors';
 import { definePermissions } from '../../src/permissions';
-import { defineResources } from '../../src/resources';
+import { defineResource, defineResources } from '../../src/resources';
 
 type User = { id: string };
 type Project = { id: string; ownerId: string };
 
 const resources = defineResources({
-  project: {
+  project: defineResource<Project>({
     actions: ['read', 'update', 'delete'],
-    resource: {} as Project,
-  },
+  }),
 });
 
 describe('createAuthorization', () => {
   it('creates an engine from a valid definition', () => {
-    const permissions = definePermissions<User>()(resources, {
-      '*': { viewer: { project: ['read'] } },
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(resources, {
+      viewer: { project: ['read'] },
     });
 
     const authz = createAuthorization({ resources, permissions });
@@ -55,8 +55,9 @@ describe('createAuthorization', () => {
   });
 
   it('accepts wildcard actions', () => {
-    const permissions = definePermissions<User>()(resources, {
-      '*': { admin: { project: ['*'] } },
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(resources, {
+      admin: { project: ['*'] },
     });
 
     expect(() => createAuthorization({ resources, permissions })).not.toThrow();
@@ -89,12 +90,11 @@ describe('createAuthorization', () => {
   });
 
   it('does not validate inheritance eagerly: cycles in unused branches do not block creation', () => {
-    const permissions = definePermissions<User>()(resources, {
-      '*': {
-        viewer: { project: ['read'] },
-        broken: { extends: ['alsoBroken'] },
-        alsoBroken: { extends: ['broken'] },
-      },
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(resources, {
+      viewer: { project: ['read'] },
+      broken: { extends: ['alsoBroken'] },
+      alsoBroken: { extends: ['broken'] },
     });
 
     const authz = createAuthorization({ resources, permissions });
@@ -105,8 +105,9 @@ describe('createAuthorization', () => {
   });
 
   it('throws UnknownRoleError when the session uses an unknown role', () => {
-    const permissions = definePermissions<User>()(resources, {
-      '*': { viewer: { project: ['read'] } },
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(resources, {
+      viewer: { project: ['read'] },
     });
 
     const authz = createAuthorization({ resources, permissions });

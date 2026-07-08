@@ -1,3 +1,5 @@
+import type { DefaultScope } from '../permissions/constants';
+import type { PermissionsMeta } from '../permissions/permission.types';
 import type { EvaluationReason } from '../evaluator/evaluator.types';
 
 /**
@@ -28,29 +30,46 @@ export type AuthorizationExplanation = {
 };
 
 /**
- * Union of scope names declared in a permission definition. Any string is
- * still accepted (scopes can be dynamic); declared scopes get autocomplete.
+ * Union of scope names for session input. Single-tenant definitions only
+ * need the default scope; scoped definitions expose declared scope keys.
  */
-export type ScopeNameOf<Defs> = (keyof Defs & string) | (string & {});
+export type ScopeNameOf<Meta> = Meta extends {
+  readonly mode: 'single-tenant';
+}
+  ? DefaultScope | (string & {})
+  : Meta extends { readonly mode: 'scoped'; readonly defs: infer Defs }
+    ? (keyof Defs & string) | (string & {})
+    : string & {};
 
 /**
- * Union of role names declared in any scope of a permission definition.
- * Any string is still accepted (unknown roles fail at runtime with
- * `UnknownRoleError`); declared roles get autocomplete.
+ * Union of role names available for session input.
  */
-export type RoleNameOf<Defs> =
-  | { [Scope in keyof Defs & string]: keyof Defs[Scope] & string }[keyof Defs &
-      string]
-  | (string & {});
+export type RoleNameOf<Meta> = Meta extends {
+  readonly mode: 'single-tenant';
+  readonly defs: infer Defs;
+}
+  ? Defs extends { readonly '*': infer RoleMap }
+    ? (keyof RoleMap & string) | (string & {})
+    : string & {}
+  : Meta extends { readonly mode: 'scoped'; readonly defs: infer Defs }
+    ? Defs extends Record<string, Record<string, unknown>>
+      ? | {
+            [Scope in keyof Defs & string]: keyof Defs[Scope] & string;
+          }[keyof Defs & string]
+        | (string & {})
+      : string & {}
+    : string & {};
 
 /**
  * Input of `authz.session()`. `context` is required when the `Context`
  * type parameter does not accept `undefined`.
  */
-export type SessionInput<Defs, Subject, Context> = {
+export type SessionInput<Meta, Subject, Context> = {
   readonly subject: Subject;
-  readonly scope?: ScopeNameOf<Defs>;
-  readonly roles: readonly RoleNameOf<Defs>[];
+  readonly scope?: ScopeNameOf<Meta>;
+  readonly roles: readonly RoleNameOf<Meta>[];
 } & (undefined extends Context
   ? { readonly context?: Context }
   : { readonly context: Context });
+
+export type { PermissionsMeta };

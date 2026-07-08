@@ -1,19 +1,17 @@
 import { describe, expectTypeOf, it } from 'vitest';
-import { defineResources } from '../../src/resources';
+import { defineResource, defineResources } from '../../src/resources';
 import type { ActionOf, InstanceOf, ResourceName } from '../../src/resources';
 
 type Project = { id: string; ownerId: string };
 type Invoice = { id: string; amount: number };
 
 const resources = defineResources({
-  project: {
+  project: defineResource<Project>({
     actions: ['create', 'read', 'update', 'delete'],
-    resource: {} as Project,
-  },
-  invoice: {
+  }),
+  invoice: defineResource<Invoice>({
     actions: ['read', 'approve'],
-    resource: {} as Invoice,
-  },
+  }),
 });
 
 type Resources = typeof resources;

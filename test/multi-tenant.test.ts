@@ -3,58 +3,63 @@ import {
   AuthorizationDeniedError,
   createAuthorization,
   definePermissions,
+  defineResource,
   defineResources,
 } from '../src/index';
+import { scopedPermissions } from '../src/scoped';
 
 type User = { id: string; approvalLimit: number };
 type Project = { id: string; ownerId: string };
 type Invoice = { id: string; amount: number };
 
 const resources = defineResources({
-  project: {
+  project: defineResource<Project>({
     actions: ['read', 'update', 'delete'],
-    resource: {} as Project,
-  },
-  invoice: {
+  }),
+  invoice: defineResource<Invoice>({
     actions: ['read', 'approve'],
-    resource: {} as Invoice,
-  },
+  }),
 });
 
-const permissions = definePermissions<User>()(resources, {
-  '*': {
-    viewer: {
-      project: ['read'],
+const permissionBuilder = definePermissions<User>();
+const permissions = permissionBuilder(
+  resources,
+  {
+    '*': {
+      viewer: {
+        project: ['read'],
+      },
+      editor: {
+        extends: ['viewer'],
+        project: [
+          'update',
+          {
+            action: 'delete',
+            when: ({ subject, resource }) => resource.ownerId === subject.id,
+          },
+        ],
+      },
     },
-    editor: {
-      extends: ['viewer'],
-      project: [
-        'update',
-        {
-          action: 'delete',
-          when: ({ subject, resource }) => resource.ownerId === subject.id,
-        },
-      ],
+    'org:acme': {
+      editor: {
+        extends: ['viewer'],
+        project: ['read', 'update', 'delete'],
+      },
+      manager: {
+        extends: ['editor'],
+        invoice: [
+          'read',
+          {
+            action: 'approve',
+            when: ({ subject, resource }) =>
+              resource.amount <= subject.approvalLimit,
+          },
+        ],
+      },
     },
   },
-  'org:acme': {
-    editor: {
-      extends: ['viewer'],
-      project: ['read', 'update', 'delete'],
-    },
-    manager: {
-      extends: ['editor'],
-      invoice: [
-        'read',
-        {
-          action: 'approve',
-          when: ({ subject, resource }) =>
-            resource.amount <= subject.approvalLimit,
-        },
-      ],
-    },
-  },
-});
+  { resolver: scopedPermissions() },
+);
 
 const authz = createAuthorization({ resources, permissions });
 
@@ -87,9 +92,9 @@ describe('multi-tenant authorization', () => {
       roles: ['editor'],
     });
 
-    await expect(acmeSession.can('project', 'delete', foreignProject)).resolves.toBe(
-      true,
-    );
+    await expect(
+      acmeSession.can('project', 'delete', foreignProject),
+    ).resolves.toBe(true);
     await expect(
       defaultSession.can('project', 'delete', foreignProject),
     ).resolves.toBe(false);
@@ -117,7 +122,11 @@ describe('multi-tenant authorization', () => {
       roles: ['manager'],
     });
 
-    const explanation = await session.explain('project', 'delete', foreignProject);
+    const explanation = await session.explain(
+      'project',
+      'delete',
+      foreignProject,
+    );
 
     expect(explanation.allowed).toBe(true);
     expect(explanation.grantedBy).toEqual({

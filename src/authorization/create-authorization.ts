@@ -1,5 +1,7 @@
 import type {
   DefinedPermissions,
+  PermissionsMeta,
+  PermissionsMode,
   PermissionsShape,
 } from '../permissions/permission.types';
 import type { AuthorizationPlugin } from '../plugins/plugin.types';
@@ -20,18 +22,25 @@ export function createAuthorization<
   Subject,
   Context,
   Defs extends PermissionsShape<Resources, Subject, Context>,
+  Mode extends PermissionsMode,
 >(input: {
   resources: Resources;
-  permissions: DefinedPermissions<Resources, Subject, Context, Defs>;
+  permissions: DefinedPermissions<Resources, Subject, Context, Defs, Mode>;
   plugins?: readonly AuthorizationPlugin<Subject, Context>[];
-}): Authorization<Resources, Subject, Context, Defs> {
+}): Authorization<
+  Resources,
+  Subject,
+  Context,
+  PermissionsMeta<Resources, Subject, Context, Mode, Defs>
+> {
   const permissions = input.permissions as AnyPermissionsDefinition;
 
   validateDefinition(input.resources, permissions);
 
-  return new Authorization<Resources, Subject, Context, Defs>(
-    input.resources,
-    permissions,
-    input.plugins ?? [],
-  );
+  return new Authorization<
+    Resources,
+    Subject,
+    Context,
+    PermissionsMeta<Resources, Subject, Context, Mode, Defs>
+  >(input.resources, permissions, input.plugins ?? []);
 }
