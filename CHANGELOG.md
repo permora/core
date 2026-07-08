@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Single-tenant permissions: pass roles directly (no `*` scope wrapper); normalized internally to `{ '*': roleMap }`
 - Permission definition interpreters via `definePermissionInterpreter` and `definePermissions(..., { resolver })` for custom input formats at definition time
 - Tree-shakeable `@permora/core/scoped` subpath with `scopedPermissions()` for multi-tenant scope resolution (flat and nested scope trees)
+- `scopedPermissions({ separator })` option to customize how nested scope segments are joined (default `':'`; e.g. `org__staging` with `separator: '__'`)
 - Scoped roles with per-role fallback to the default scope `*` and full override semantics
 - Transitive role inheritance with cycle detection (`CircularRoleInheritanceError`)
 - Conditional permissions via sync/async `when` predicates and wildcard actions (`"*"`)
@@ -29,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `definePermissions` is now a generic factory (`definePermissions<User>()`) rather than accepting `resources` as its first runtime argument in a single call
 - README and SPEC examples updated for the builder pattern, `defineResource`, and typed resource name conventions
+- `scopedPermissions({ separator })` is only applied when `nested: true`; in flat mode scope keys must be written exactly as they appear at runtime
 
 ### Deprecated
 
