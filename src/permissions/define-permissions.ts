@@ -19,10 +19,7 @@ type SingleTenantCanonical<
 };
 
 type DefinePermissionsApply<Subject, Context> = {
-  <
-    const Resources extends ResourcesShape,
-    Input,
-  >(
+  <const Resources extends ResourcesShape, Input>(
     resources: Resources,
     input: Input,
     options: DefinePermissionsOptions<Input, Resources, Subject, Context>,
@@ -88,10 +85,7 @@ export function definePermissions<
   Subject,
   Context = undefined,
 >(): PermissionBuilder<Subject, Context> {
-  const apply = <
-    const Resources extends ResourcesShape,
-    Input,
-  >(
+  const apply = <const Resources extends ResourcesShape, Input>(
     resources: Resources,
     input: Input,
     options?: DefinePermissionsOptions<Input, Resources, Subject, Context>,

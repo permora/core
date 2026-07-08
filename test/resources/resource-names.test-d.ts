@@ -81,8 +81,10 @@ const resources = defineResources({
 
 describe('definePermissions type safety', () => {
   it('accepts valid actions, wildcard and conditional permissions', () => {
-    const permissionBuilder: PermissionBuilder<User, Ctx> =
-      definePermissions<User, Ctx>();
+    const permissionBuilder: PermissionBuilder<User, Ctx> = definePermissions<
+      User,
+      Ctx
+    >();
     permissionBuilder(resources, {
       viewer: { project: ['read'] },
       editor: {

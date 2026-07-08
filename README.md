@@ -223,7 +223,7 @@ await session.can('project', 'read'); // true (manager → editor → viewer)
 await session.can('project', 'delete', project); // true (org:acme editor override)
 ```
 
-Nested scope trees are supported via `scopedPermissions({ nested: true })`:
+Nested scope trees are supported via `scopedPermissions({ nested: true })`. Use `separator` to customize how segments are joined (only applies when `nested: true`):
 
 ```typescript
 const permissionBuilder = definePermissions<User>();
@@ -234,9 +234,9 @@ permissionBuilder(
       staging: { admin: { invoice: ['create', 'read'] } },
     },
   },
-  { resolver: scopedPermissions({ nested: true }) },
+  { resolver: scopedPermissions({ nested: true, separator: '__' }) },
 );
-// → canonical scope "arasaka:staging"
+// → canonical scope "arasaka__staging"
 ```
 
 ### Permission definition resolvers

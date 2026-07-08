@@ -12,7 +12,10 @@ export type ScopedPermissionsOptions = {
   readonly nested?: boolean;
 
   /**
-   * Separator used when joining nested scope segments. Defaults to `':'`.
+   * Separator used to join nested scope segments (e.g. `org` + `staging` → `org:staging`).
+   * Only applied when `nested: true`. Ignored in flat mode — scope keys must be
+   * written exactly as they should appear at runtime.
+   * Defaults to `':'`.
    */
   readonly separator?: string;
 };

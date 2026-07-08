@@ -65,6 +65,26 @@ describe('flattenNestedScopes', () => {
       'arasaka:staging': { admin: { invoice: ['create'] } },
     });
   });
+
+  it('joins segments with a custom separator', () => {
+    expect(
+      flattenNestedScopes(
+        {
+          arasaka: {
+            staging: {
+              admin: { invoice: ['create', 'read'] },
+            },
+          },
+        },
+        [],
+        '__',
+      ),
+    ).toEqual({
+      arasaka__staging: {
+        admin: { invoice: ['create', 'read'] },
+      },
+    });
+  });
 });
 
 describe('scopedPermissions', () => {
@@ -96,6 +116,59 @@ describe('scopedPermissions', () => {
     expect(permissions['arasaka:staging'].admin).toEqual({
       invoice: ['create', 'read'],
     });
+  });
+
+  it('uses custom separator when nested is true', () => {
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(
+      resources,
+      {
+        arasaka: {
+          staging: { admin: { invoice: ['read'] } },
+        },
+      },
+      { resolver: scopedPermissions({ nested: true, separator: '__' }) },
+    );
+
+    expect(permissions['arasaka__staging'].admin).toEqual({
+      invoice: ['read'],
+    });
+  });
+
+  it('ignores separator in flat mode', () => {
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(
+      resources,
+      {
+        'org:acme': { admin: { invoice: ['read'] } },
+      },
+      { resolver: scopedPermissions({ separator: '__' }) },
+    );
+
+    expect(permissions['org:acme'].admin).toEqual({ invoice: ['read'] });
+    expect(permissions['org__acme']).toBeUndefined();
+  });
+
+  it('resolves sessions with custom separator scope', async () => {
+    const permissionBuilder = definePermissions<User>();
+    const permissions = permissionBuilder(
+      resources,
+      {
+        arasaka: {
+          staging: { admin: { invoice: ['read'] } },
+        },
+      },
+      { resolver: scopedPermissions({ nested: true, separator: '__' }) },
+    );
+
+    const authz = createAuthorization({ resources, permissions });
+    const session = authz.session({
+      subject: { id: 'u1' },
+      scope: 'arasaka__staging',
+      roles: ['admin'],
+    });
+
+    await expect(session.can('invoice', 'read')).resolves.toBe(true);
   });
 
   it('preserves extends and when through nested interpretation', async () => {
