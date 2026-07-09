@@ -64,6 +64,7 @@ export class Authorization<
         roles: input.roles,
         context,
       },
+      this.resources,
       this.scopeResolution,
     );
 

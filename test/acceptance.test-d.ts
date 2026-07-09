@@ -1,44 +1,17 @@
 /**
- * Type-safety acceptance tests for the public session API (SPEC §35).
+ * Type-safety acceptance tests for the public session API (SPEC §35),
+ * against the same SPEC §41 fixture used by acceptance.test.ts.
  */
 import { describe, expectTypeOf, it } from 'vitest';
-import {
-  createAuthorization,
-  definePermissions,
-  defineResource,
-  defineResources,
-} from '../src/index';
+import { createAcceptanceSession, type User } from './fixtures/acceptance';
 
-type User = { id: string };
-type Project = { id: string; ownerId: string };
-type Invoice = { id: string; amount: number };
+const session = createAcceptanceSession();
 
-const resources = defineResources({
-  project: defineResource<Project>({
-    actions: ['read', 'update', 'delete'],
-  }),
-  invoice: defineResource<Invoice>({
-    actions: ['read', 'approve'],
-  }),
-});
-
-const permissionBuilder = definePermissions<User>();
-const permissions = permissionBuilder(resources, {
-  viewer: { project: ['read'] },
-});
-
-const authz = createAuthorization({ resources, permissions });
-
-const session = authz.session({
-  subject: { id: 'u1' },
-  roles: ['viewer'],
-});
-
-describe('session type safety', () => {
+describe('session type safety (SPEC §35)', () => {
   it('accepts valid resource/action pairs', () => {
-    expectTypeOf(session.can('project', 'read')).toEqualTypeOf<
-      Promise<boolean>
-    >();
+    expectTypeOf(
+      session.can('project', 'read'),
+    ).resolves.toEqualTypeOf<boolean>();
   });
 
   it('rejects actions from other resources', () => {
@@ -59,8 +32,8 @@ describe('session type safety', () => {
   });
 
   it('types allowedActions return per resource', () => {
-    expectTypeOf(session.allowedActions('project')).toEqualTypeOf<
-      Promise<('read' | 'update' | 'delete')[]>
+    expectTypeOf(session.allowedActions('project')).resolves.toEqualTypeOf<
+      ('read' | 'update' | 'delete')[]
     >();
   });
 

@@ -30,6 +30,41 @@ export type AuthorizationExplanation = {
 };
 
 /**
+ * Normalized permission entry inside a {@link PermissionGraphRole}.
+ */
+export type PermissionGraphEntry = {
+  readonly resource: string;
+  readonly action: string;
+  /** `true` when the grant has a condition (not evaluated here). */
+  readonly conditional: boolean;
+  /** Named condition id when the grant uses `condition` instead of inline `when`. */
+  readonly condition?: string;
+};
+
+/**
+ * A single resolved role reachable from the session input roles,
+ * in depth-first inheritance order.
+ */
+export type PermissionGraphRole = {
+  /** Scope where the role definition was found. */
+  readonly sourceScope: string;
+  readonly role: string;
+  readonly extends?: readonly string[];
+  readonly permissions: ReadonlyArray<PermissionGraphEntry>;
+};
+
+/**
+ * Result of `session.permissionGraph()`.
+ * Snapshot of the partially compiled session without condition evaluation.
+ */
+export type SessionPermissionGraph = {
+  readonly scope: string;
+  /** Session input roles (not the full inherited graph). */
+  readonly roles: readonly string[];
+  readonly resolvedRoles: ReadonlyArray<PermissionGraphRole>;
+};
+
+/**
  * Union of scope names for session input. Single-tenant definitions only
  * need the default scope; scoped definitions expose declared scope keys.
  */

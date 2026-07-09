@@ -3,6 +3,9 @@ import { evaluate } from '../evaluator/evaluator';
 import type { EvaluationResult } from '../evaluator/evaluator.types';
 import type { GrantIndex } from '../grants/grant.types';
 import type { AuthorizationPlugin } from '../plugins/plugin.types';
+import { serializePortableSession } from '../portable/serialize-portable-session';
+import type { PortableSession } from '../portable/portable.types';
+import type { ResolvedRole } from '../roles/role.types';
 import type {
   ActionOf,
   InstanceOf,
@@ -10,7 +13,11 @@ import type {
   ResourcesShape,
 } from '../resources/resource.types';
 import type { CompiledSessionData } from './compile-session';
-import type { AuthorizationExplanation } from './session.types';
+import { serializePermissionGraph } from './serialize-permission-graph';
+import type {
+  AuthorizationExplanation,
+  SessionPermissionGraph,
+} from './session.types';
 
 /**
  * Runtime view of the authorization model for a specific
@@ -30,6 +37,7 @@ export class AuthorizationSession<
   readonly context: Context;
 
   private readonly grants: GrantIndex;
+  private readonly resolvedRoles: readonly ResolvedRole[];
   private readonly resources: Resources;
   private readonly plugins: readonly AuthorizationPlugin<Subject, Context>[];
 
@@ -44,6 +52,7 @@ export class AuthorizationSession<
     this.roles = data.roles;
     this.context = data.context as Context;
     this.grants = data.grants;
+    this.resolvedRoles = data.resolvedRoles;
     this.plugins = plugins;
   }
 
@@ -178,5 +187,40 @@ export class AuthorizationSession<
     }
 
     return allowed;
+  }
+
+  /**
+   * Returns the reachable role graph and normalized permissions for this
+   * session. Synchronous; does not evaluate conditions or expand wildcards.
+   *
+   * Roles appear in depth-first inheritance order (same as compilation).
+   * Use `explain()` / `allowedActions()` for effective access decisions.
+   */
+  permissionGraph(): SessionPermissionGraph {
+    return serializePermissionGraph({
+      scope: this.scope,
+      roles: this.roles,
+      resolvedRoles: this.resolvedRoles,
+      resources: this.resources,
+    });
+  }
+
+  /**
+   * Exports a JSON-friendly portable snapshot of this session.
+   *
+   * Conditional grants must use named `condition` ids from
+   * `defineResource(...).actions(..., { conditions })`. Inline `when` functions are not
+   * serializable and cause `PortableInlineConditionError`.
+   *
+   * Transport integrity and expiration (e.g. JWT `exp`) are the consumer's
+   * responsibility — not handled by the core.
+   */
+  toPortable(): PortableSession<Subject> {
+    return serializePortableSession({
+      scope: this.scope,
+      roles: this.roles,
+      subject: this.subject,
+      grants: this.grants,
+    });
   }
 }

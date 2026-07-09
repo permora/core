@@ -4,15 +4,18 @@ import { DEFAULT_SCOPE } from '../permissions/constants';
 import { collectRoleGraph } from '../roles/inheritance-resolver';
 import type {
   AnyPermissionsDefinition,
+  ResolvedRole,
   ScopeResolutionOptions,
 } from '../roles/role.types';
 import { DEFAULT_SCOPE_RESOLUTION } from '../roles/role.types';
+import type { ResourcesShape } from '../resources/resource.types';
 
 export type CompiledSessionData = {
   readonly subject: unknown;
   readonly scope: string;
   readonly roles: readonly string[];
   readonly context: unknown;
+  readonly resolvedRoles: readonly ResolvedRole[];
   readonly grants: GrantIndex;
 };
 
@@ -35,6 +38,7 @@ export type RawSessionInput = {
 export function compileSession(
   permissions: AnyPermissionsDefinition,
   input: RawSessionInput,
+  resources: ResourcesShape,
   scopeResolution: Required<ScopeResolutionOptions> = DEFAULT_SCOPE_RESOLUTION,
 ): CompiledSessionData {
   const scope = input.scope ?? DEFAULT_SCOPE;
@@ -51,6 +55,7 @@ export function compileSession(
     scope,
     roles: input.roles,
     context: input.context,
-    grants: createGrantIndex(resolvedRoles),
+    resolvedRoles,
+    grants: createGrantIndex(resolvedRoles, resources),
   };
 }

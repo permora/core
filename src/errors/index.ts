@@ -3,3 +3,8 @@ export { UnknownRoleError } from './unknown-role-error';
 export { CircularRoleInheritanceError } from './circular-role-inheritance-error';
 export { AuthorizationDeniedError } from './authorization-denied-error';
 export { InvalidPermissionDefinitionError } from './invalid-permission-definition-error';
+export { PortableSessionError } from './portable-session-error';
+export { PortableInlineConditionError } from './portable-inline-condition-error';
+export { PortableSessionInvalidError } from './portable-session-invalid-error';
+export { PortableSessionStaleError } from './portable-session-stale-error';
+export type { PortableStaleReason } from './portable-session-stale-error';

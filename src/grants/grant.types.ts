@@ -20,6 +20,8 @@ export type CompiledGrant = {
   readonly resource: string;
   /** Concrete action or `"*"` (wildcards are never expanded). */
   readonly action: string;
+  /** Opaque id from `defineResource(...).actions(..., { conditions })`. */
+  readonly conditionId?: string;
   readonly when?: AnyCondition;
 };
 

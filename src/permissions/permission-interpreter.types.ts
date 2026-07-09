@@ -11,6 +11,10 @@ export type InterpretContext<Resources extends ResourcesShape> = {
 /**
  * Transforms a custom permission input into the canonical
  * `scope → role → roleDefinition` shape.
+ *
+ * `interpret` uses method syntax so parameter types are checked bivariantly,
+ * allowing interpreters typed with a concrete `Input` to be passed to
+ * `.with(interpreter)` without forcing `Input` to widen.
  */
 export type PermissionDefinitionInterpreter<
   Input,
@@ -19,31 +23,8 @@ export type PermissionDefinitionInterpreter<
   Context = undefined,
 > = {
   readonly name?: string;
-  readonly interpret: (
+  interpret(
     input: Input,
     context: InterpretContext<Resources>,
-  ) => PermissionsShape<Resources, Subject, Context>;
-};
-
-/**
- * Options for `definePermissions()` when using a custom input resolver.
- *
- * `interpret` uses method syntax so parameter types are checked bivariantly,
- * allowing resolvers typed with a concrete `Input` to be passed when
- * `definePermissions<Subject>()(resources, input, { resolver })` leaves
- * `Input` at its default when the resolver uses method syntax.
- */
-export type DefinePermissionsOptions<
-  Input,
-  Resources extends ResourcesShape,
-  Subject,
-  Context,
-> = {
-  readonly resolver: {
-    readonly name?: string;
-    interpret(
-      input: Input,
-      context: InterpretContext<Resources>,
-    ): PermissionsShape<Resources, Subject, Context> | Record<string, unknown>;
-  };
+  ): PermissionsShape<Resources, Subject, Context> | Record<string, unknown>;
 };

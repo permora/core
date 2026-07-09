@@ -1,20 +1,51 @@
 /**
+ * Predicate registered on a resource under an opaque condition id.
+ * Used by portable sessions to rehydrate `when` at runtime.
+ */
+export type ResourceCondition<Subject, Resource, Context> = (input: {
+  subject: Subject;
+  scope: string;
+  resource: Resource;
+  context: Context;
+}) => boolean | Promise<boolean>;
+
+/**
+ * Erased condition signature stored on {@link ResourceConfig}.
+ * Wider than {@link ResourceCondition} so resources with concrete instance
+ * types remain assignable to {@link ResourcesShape}.
+ */
+export type ResourceConditionFn = (input: {
+  subject: unknown;
+  scope: string;
+  resource: unknown;
+  context: unknown;
+}) => boolean | Promise<boolean>;
+
+/**
  * Configuration of a single protected resource type.
  *
- * Prefer `defineResource<MyType>({ actions })` over manually setting
+ * Prefer `defineResource<MyType>().actions([...])` over manually setting
  * `resource: {} as MyType` — the instance value is never read at runtime.
  */
 export type ResourceConfig = {
   readonly actions: readonly string[];
   readonly resource: unknown;
+  readonly conditions?: Readonly<Record<string, ResourceConditionFn>>;
 };
 
 /**
  * Resource configuration with a concrete instance type.
  */
-export type ResourceConfigFor<Resource> = {
+export type ResourceConfigFor<
+  Resource,
+  Subject = unknown,
+  Context = unknown,
+> = {
   readonly actions: readonly string[];
   readonly resource: Resource;
+  readonly conditions?: Readonly<
+    Record<string, ResourceCondition<Subject, Resource, Context>>
+  >;
 };
 
 /**

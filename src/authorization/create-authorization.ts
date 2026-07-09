@@ -68,10 +68,5 @@ export function createAuthorization<
     Subject,
     Context,
     PermissionsMeta<Resources, Subject, Context, Mode, Defs>
-  >(
-    input.resources,
-    permissions,
-    input.plugins ?? [],
-    scopeResolution,
-  );
+  >(input.resources, permissions, input.plugins ?? [], scopeResolution);
 }

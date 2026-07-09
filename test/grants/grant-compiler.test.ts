@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { compileRoleGrants } from '../../src/grants';
+import { testResources } from '../fixtures/resources';
 
 describe('compileRoleGrants', () => {
   it('normalizes string permissions into grants', () => {
@@ -75,5 +76,25 @@ describe('compileRoleGrants', () => {
     });
 
     expect(grants).toHaveLength(3);
+  });
+
+  it('resolves named condition ids into when functions', () => {
+    const grants = compileRoleGrants(
+      {
+        sourceScope: '*',
+        role: 'editor',
+        definition: {
+          project: [{ action: 'delete', condition: 'owner-only' }],
+        },
+      },
+      testResources,
+    );
+
+    expect(grants[0]).toMatchObject({
+      resource: 'project',
+      action: 'delete',
+      conditionId: 'owner-only',
+    });
+    expect(typeof grants[0]?.when).toBe('function');
   });
 });

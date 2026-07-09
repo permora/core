@@ -79,23 +79,61 @@ function validateResourcePermissions(
   }
 
   for (const permission of value) {
+    if (!isPlainObject(permission) && typeof permission !== 'string') {
+      throw new InvalidPermissionDefinitionError(
+        `Invalid permission entry in "${scope}.${role}.${resource}": expected an action string or { action, when? } or { action, condition }`,
+      );
+    }
+
+    if (typeof permission === 'string') {
+      validateAction(config, resource, scope, role, permission);
+      continue;
+    }
+
     const action =
-      typeof permission === 'string'
-        ? permission
-        : isPlainObject(permission) && typeof permission.action === 'string'
-          ? permission.action
-          : undefined;
+      typeof permission.action === 'string' ? permission.action : undefined;
 
     if (action === undefined) {
       throw new InvalidPermissionDefinitionError(
-        `Invalid permission entry in "${scope}.${role}.${resource}": expected an action string or { action, when? }`,
+        `Invalid permission entry in "${scope}.${role}.${resource}": expected an action string or { action, when? } or { action, condition }`,
       );
     }
 
-    if (action !== '*' && !config.actions.includes(action)) {
+    const hasWhen = 'when' in permission && permission.when !== undefined;
+    const condition =
+      'condition' in permission && typeof permission.condition === 'string'
+        ? permission.condition
+        : undefined;
+
+    if (hasWhen && condition !== undefined) {
       throw new InvalidPermissionDefinitionError(
-        `Unknown action "${action}" for resource "${resource}" in "${scope}.${role}" (valid: ${config.actions.join(', ')})`,
+        `Permission in "${scope}.${role}.${resource}" cannot define both "when" and "condition"`,
       );
     }
+
+    if (condition !== undefined) {
+      const registry = config.conditions;
+      if (registry === undefined || registry[condition] === undefined) {
+        throw new InvalidPermissionDefinitionError(
+          `Unknown condition "${condition}" for resource "${resource}" in "${scope}.${role}"`,
+        );
+      }
+    }
+
+    validateAction(config, resource, scope, role, action);
+  }
+}
+
+function validateAction(
+  config: ResourcesShape[string],
+  resource: string,
+  scope: string,
+  role: string,
+  action: string,
+): void {
+  if (action !== '*' && !config.actions.includes(action)) {
+    throw new InvalidPermissionDefinitionError(
+      `Unknown action "${action}" for resource "${resource}" in "${scope}.${role}" (valid: ${config.actions.join(', ')})`,
+    );
   }
 }

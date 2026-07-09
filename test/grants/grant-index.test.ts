@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createGrantIndex, lookupGrants } from '../../src/grants';
 import type { ResolvedRole } from '../../src/roles';
+import { testResources } from '../fixtures/resources';
 
 const isOwner = () => true;
 const isManager = () => false;
@@ -26,14 +27,14 @@ const roles: ResolvedRole[] = [
 
 describe('createGrantIndex', () => {
   it('indexes grants by resource and action', () => {
-    const index = createGrantIndex(roles);
+    const index = createGrantIndex(roles, testResources);
 
     expect(index.get('project')?.get('read')).toHaveLength(1);
     expect(index.get('project')?.get('*')).toHaveLength(1);
   });
 
   it('accumulates multiple grants for the same resource/action (OR semantics)', () => {
-    const index = createGrantIndex(roles);
+    const index = createGrantIndex(roles, testResources);
     const updateGrants = index.get('project')?.get('update');
 
     expect(updateGrants).toHaveLength(2);
@@ -45,7 +46,7 @@ describe('createGrantIndex', () => {
 });
 
 describe('lookupGrants', () => {
-  const index = createGrantIndex(roles);
+  const index = createGrantIndex(roles, testResources);
 
   it('returns exact grants followed by wildcard grants', () => {
     const candidates = lookupGrants(index, 'project', 'read');

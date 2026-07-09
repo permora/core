@@ -38,22 +38,31 @@ export type {
   Condition,
   ConditionInput,
   DefinedPermissions,
-  DefinePermissionsOptions,
   InterpretContext,
+  InterpretingBuilder,
+  NestedScopedPermissionsInput,
   Permission,
-  PermissionBuilder,
   PermissionDefinitionInterpreter,
+  PermissionsForSubject,
   PermissionsMeta,
   PermissionsMetaOf,
   PermissionsMode,
   PermissionsShape,
+  PermissionsWithResources,
   RoleDefinition,
   RoleMap,
+  ScopedPermissionsInput,
   SingleTenantPermissionsInput,
 } from './permissions';
 
 export { AuthorizationSession } from './session';
-export type { AuthorizationExplanation, SessionInput } from './session';
+export type {
+  AuthorizationExplanation,
+  PermissionGraphEntry,
+  PermissionGraphRole,
+  SessionInput,
+  SessionPermissionGraph,
+} from './session';
 
 export type { EvaluationReason } from './evaluator';
 
@@ -62,8 +71,13 @@ export {
   AuthorizationError,
   CircularRoleInheritanceError,
   InvalidPermissionDefinitionError,
+  PortableInlineConditionError,
+  PortableSessionError,
+  PortableSessionInvalidError,
+  PortableSessionStaleError,
   UnknownRoleError,
 } from './errors';
+export type { PortableStaleReason } from './errors';
 
 export {
   DEFAULT_SCOPE_RESOLUTION,
@@ -71,3 +85,16 @@ export {
   normalizeScopeResolution,
 } from './roles';
 export type { ScopeResolutionOptions } from './roles';
+
+export {
+  createSessionFromPortable,
+  decodePortableSession,
+  encodePortableSession,
+  PORTABLE_SESSION_VERSION,
+} from './portable';
+export type {
+  CompactPortableSession,
+  CreateSessionFromPortableOptions,
+  PortableGrant,
+  PortableSession,
+} from './portable';

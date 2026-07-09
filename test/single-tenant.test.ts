@@ -11,31 +11,36 @@ type User = { id: string };
 type Post = { id: string; authorId: string; published: boolean };
 
 const resources = defineResources({
-  post: defineResource<Post>({
-    actions: ['read', 'create', 'update', 'delete', 'publish'],
-  }),
+  post: defineResource<Post>().actions([
+    'read',
+    'create',
+    'update',
+    'delete',
+    'publish',
+  ]),
 });
 
-const permissionBuilder = definePermissions<User>();
-const permissions = permissionBuilder(resources, {
-  viewer: {
-    post: ['read'],
-  },
-  editor: {
-    extends: ['viewer'],
-    post: [
-      'create',
-      'update',
-      {
-        action: 'delete',
-        when: ({ subject, resource }) => resource.authorId === subject.id,
-      },
-    ],
-  },
-  admin: {
-    post: ['*'],
-  },
-});
+const permissions = definePermissions({ resources })
+  .forSubject<User>()
+  .from({
+    viewer: {
+      post: ['read'],
+    },
+    editor: {
+      extends: ['viewer'],
+      post: [
+        'create',
+        'update',
+        {
+          action: 'delete',
+          when: ({ subject, resource }) => resource.authorId === subject.id,
+        },
+      ],
+    },
+    admin: {
+      post: ['*'],
+    },
+  });
 
 const authz = createAuthorization({ resources, permissions });
 

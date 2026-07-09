@@ -11,17 +11,16 @@ type User = { id: string };
 type Project = { id: string; ownerId: string };
 
 const resources = defineResources({
-  project: defineResource<Project>({
-    actions: ['read', 'update', 'delete'],
-  }),
+  project: defineResource<Project>().actions(['read', 'update', 'delete']),
 });
 
 describe('createAuthorization', () => {
   it('creates an engine from a valid definition', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(resources, {
-      viewer: { project: ['read'] },
-    });
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .from({
+        viewer: { project: ['read'] },
+      });
 
     const authz = createAuthorization({ resources, permissions });
 
@@ -55,10 +54,11 @@ describe('createAuthorization', () => {
   });
 
   it('accepts wildcard actions', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(resources, {
-      admin: { project: ['*'] },
-    });
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .from({
+        admin: { project: ['*'] },
+      });
 
     expect(() => createAuthorization({ resources, permissions })).not.toThrow();
   });
@@ -90,12 +90,13 @@ describe('createAuthorization', () => {
   });
 
   it('does not validate inheritance eagerly: cycles in unused branches do not block creation', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(resources, {
-      viewer: { project: ['read'] },
-      broken: { extends: ['alsoBroken'] },
-      alsoBroken: { extends: ['broken'] },
-    });
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .from({
+        viewer: { project: ['read'] },
+        broken: { extends: ['alsoBroken'] },
+        alsoBroken: { extends: ['broken'] },
+      });
 
     const authz = createAuthorization({ resources, permissions });
 
@@ -105,10 +106,11 @@ describe('createAuthorization', () => {
   });
 
   it('throws UnknownRoleError when the session uses an unknown role', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(resources, {
-      viewer: { project: ['read'] },
-    });
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .from({
+        viewer: { project: ['read'] },
+      });
 
     const authz = createAuthorization({ resources, permissions });
 
@@ -118,10 +120,11 @@ describe('createAuthorization', () => {
   });
 
   it('accepts scopeResolution options', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(resources, {
-      viewer: { project: ['read'] },
-    });
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .from({
+        viewer: { project: ['read'] },
+      });
 
     const authz = createAuthorization({
       resources,
@@ -130,5 +133,63 @@ describe('createAuthorization', () => {
     });
 
     expect(authz).toBeDefined();
+  });
+
+  it('rejects permissions that define both when and condition', () => {
+    const conditionedResources = defineResources({
+      project: defineResource<Project>().actions(['delete'], {
+        conditions: {
+          'owner-only': ({ subject, resource }) =>
+            resource.ownerId === subject.id,
+        },
+      }),
+    });
+
+    const permissions = {
+      '*': {
+        editor: {
+          project: [
+            {
+              action: 'delete',
+              when: () => true,
+              condition: 'owner-only',
+            },
+          ],
+        },
+      },
+    };
+
+    expect(() =>
+      createAuthorization({
+        resources: conditionedResources,
+        permissions: permissions as never,
+      }),
+    ).toThrow(InvalidPermissionDefinitionError);
+  });
+
+  it('rejects unknown condition ids eagerly', () => {
+    const conditionedResources = defineResources({
+      project: defineResource<Project>().actions(['delete'], {
+        conditions: {
+          'owner-only': ({ subject, resource }) =>
+            resource.ownerId === subject.id,
+        },
+      }),
+    });
+
+    const permissions = {
+      '*': {
+        editor: {
+          project: [{ action: 'delete', condition: 'missing-id' }],
+        },
+      },
+    };
+
+    expect(() =>
+      createAuthorization({
+        resources: conditionedResources,
+        permissions: permissions as never,
+      }),
+    ).toThrow(InvalidPermissionDefinitionError);
   });
 });

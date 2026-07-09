@@ -11,25 +11,24 @@ type User = { id: string };
 type Project = { id: string; ownerId: string };
 
 const resources = defineResources({
-  project: defineResource<Project>({
-    actions: ['read', 'update', 'delete'],
-  }),
+  project: defineResource<Project>().actions(['read', 'update', 'delete']),
 });
 
-const permissionBuilder = definePermissions<User>();
-const permissions = permissionBuilder(resources, {
-  viewer: { project: ['read'] },
-  editor: {
-    extends: ['viewer'],
-    project: [
-      'update',
-      {
-        action: 'delete',
-        when: ({ subject, resource }) => resource.ownerId === subject.id,
-      },
-    ],
-  },
-});
+const permissions = definePermissions({ resources })
+  .forSubject<User>()
+  .from({
+    viewer: { project: ['read'] },
+    editor: {
+      extends: ['viewer'],
+      project: [
+        'update',
+        {
+          action: 'delete',
+          when: ({ subject, resource }) => resource.ownerId === subject.id,
+        },
+      ],
+    },
+  });
 
 describe('plugin integration', () => {
   it('does not invoke hooks when no plugins are registered', async () => {

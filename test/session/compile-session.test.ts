@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { compileSession } from '../../src/session/compile-session';
+import { testResources } from '../fixtures/resources';
 
 describe('compileSession', () => {
   it('defaults scope to "*"', () => {
     const session = compileSession(
       { '*': { viewer: { project: ['read'] } } },
       { subject: { id: 'u1' }, roles: ['viewer'] },
+      testResources,
     );
 
     expect(session.scope).toBe('*');
@@ -18,6 +20,7 @@ describe('compileSession', () => {
     const session = compileSession(
       { '*': { viewer: {} } },
       { subject, roles: ['viewer'], context },
+      testResources,
     );
 
     expect(session.subject).toBe(subject);
@@ -40,11 +43,15 @@ describe('compileSession', () => {
       },
     };
 
-    const session = compileSession(permissions, {
-      subject: { id: 'u1' },
-      scope: 'org:acme',
-      roles: ['manager'],
-    });
+    const session = compileSession(
+      permissions,
+      {
+        subject: { id: 'u1' },
+        scope: 'org:acme',
+        roles: ['manager'],
+      },
+      testResources,
+    );
 
     // manager → editor → viewer; support, auditor and org:stark roles
     // must not contribute grants.
@@ -61,6 +68,7 @@ describe('compileSession', () => {
     compileSession(
       { '*': { editor: { project: [{ action: 'delete', when }] } } },
       { subject: {}, roles: ['editor'] },
+      testResources,
     );
 
     expect(when).not.toHaveBeenCalled();
@@ -76,7 +84,11 @@ describe('compileSession', () => {
     };
 
     expect(() =>
-      compileSession(permissions, { subject: {}, roles: ['viewer'] }),
+      compileSession(
+        permissions,
+        { subject: {}, roles: ['viewer'] },
+        testResources,
+      ),
     ).not.toThrow();
   });
 
@@ -84,6 +96,7 @@ describe('compileSession', () => {
     const session = compileSession(
       { '*': { admin: { project: ['*'] } } },
       { subject: {}, roles: ['admin'] },
+      testResources,
     );
 
     const actions = session.grants.get('project');

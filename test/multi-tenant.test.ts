@@ -13,18 +13,14 @@ type Project = { id: string; ownerId: string };
 type Invoice = { id: string; amount: number };
 
 const resources = defineResources({
-  project: defineResource<Project>({
-    actions: ['read', 'update', 'delete'],
-  }),
-  invoice: defineResource<Invoice>({
-    actions: ['read', 'approve'],
-  }),
+  project: defineResource<Project>().actions(['read', 'update', 'delete']),
+  invoice: defineResource<Invoice>().actions(['read', 'approve']),
 });
 
-const permissionBuilder = definePermissions<User>();
-const permissions = permissionBuilder(
-  resources,
-  {
+const permissions = definePermissions({ resources })
+  .forSubject<User>()
+  .with(scopedPermissions())
+  .from({
     '*': {
       viewer: {
         project: ['read'],
@@ -57,9 +53,7 @@ const permissions = permissionBuilder(
         ],
       },
     },
-  },
-  { resolver: scopedPermissions() },
-);
+  });
 
 const authz = createAuthorization({ resources, permissions });
 

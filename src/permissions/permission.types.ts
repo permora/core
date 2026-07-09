@@ -24,7 +24,11 @@ export type Condition<Subject, Scope, Resource, Context> = (
 
 /**
  * A permission grants an action (or every action, via `"*"`) over a
- * resource, optionally guarded by a `when` condition.
+ * resource, optionally guarded by a `when` condition or a named `condition`
+ * id from `defineResource(...).actions(..., { conditions })`.
+ *
+ * `when` and `condition` are mutually exclusive. Only named `condition`
+ * ids are portable via `session.toPortable()`.
  */
 export type Permission<
   Action extends string,
@@ -38,6 +42,10 @@ export type Permission<
   | {
       readonly action: Action | '*';
       readonly when?: Condition<Subject, Scope, Resource, Context>;
+    }
+  | {
+      readonly action: Action | '*';
+      readonly condition: string;
     };
 
 /**
@@ -78,7 +86,39 @@ export type PermissionsShape<
 };
 
 /**
- * Default input of `definePermissions()` for single-tenant apps.
+ * Nested scope tree accepted by `scopedPermissions({ nested: true })`.
+ * Intermediate nodes are nested scope segments; leaves are role maps.
+ *
+ * Top-level values must be objects whose values are role maps or further
+ * nesting — not a bare {@link RoleMap}. That keeps flat `scope → roles`
+ * input on the {@link PermissionsShape} overload so `when` stays contextual.
+ */
+export type NestedScopedPermissionsInput<
+  Resources extends ResourcesShape,
+  Subject,
+  Context,
+> = {
+  readonly [key: string]: {
+    readonly [key: string]:
+      | RoleMap<Resources, Subject, Context>
+      | NestedScopedPermissionsInput<Resources, Subject, Context>;
+  };
+};
+
+/**
+ * Input accepted by `.with(scopedPermissions()).from(...)` for scoped apps:
+ * flat `scope → roles` or a nested scope tree.
+ */
+export type ScopedPermissionsInput<
+  Resources extends ResourcesShape,
+  Subject,
+  Context,
+> =
+  | PermissionsShape<Resources, Subject, Context>
+  | NestedScopedPermissionsInput<Resources, Subject, Context>;
+
+/**
+ * Default input of `.from(...)` for single-tenant apps.
  */
 export type SingleTenantPermissionsInput<
   Resources extends ResourcesShape,

@@ -2,9 +2,10 @@ import { validateDefinition } from '../authorization/validate-definition';
 import type { AnyPermissionsDefinition } from '../roles/role.types';
 import type { ResourcesShape } from '../resources/resource.types';
 import { DEFAULT_SCOPE } from './constants';
-import type { DefinePermissionsOptions } from './permission-interpreter.types';
+import type { PermissionDefinitionInterpreter } from './permission-interpreter.types';
 import type {
   DefinedPermissions,
+  NestedScopedPermissionsInput,
   PermissionsShape,
   RoleMap,
 } from './permission.types';
@@ -18,123 +19,143 @@ type SingleTenantCanonical<
   readonly '*': Defs;
 };
 
-type DefinePermissionsApply<Subject, Context> = {
-  <const Resources extends ResourcesShape, Input>(
-    resources: Resources,
-    input: Input,
-    options: DefinePermissionsOptions<Input, Resources, Subject, Context>,
-  ): DefinedPermissions<
-    Resources,
-    Subject,
-    Context,
-    PermissionsShape<Resources, Subject, Context>,
-    'scoped'
-  >;
-  <
-    const Resources extends ResourcesShape,
-    const Defs extends RoleMap<Resources, Subject, Context>,
-  >(
-    resources: Resources,
-    definitions: Defs,
-  ): DefinedPermissions<
+type ScopedDefinedPermissions<
+  Resources extends ResourcesShape,
+  Subject,
+  Context,
+> = DefinedPermissions<
+  Resources,
+  Subject,
+  Context,
+  PermissionsShape<Resources, Subject, Context>,
+  'scoped'
+>;
+
+/**
+ * Builder after `.with(interpreter)`. Overloads keep `when` contextual for the
+ * built-in scoped shapes; the generic `Input` covers custom interpreters.
+ */
+export type InterpretingBuilder<
+  Resources extends ResourcesShape,
+  Subject,
+  Context,
+  Input,
+> = {
+  from: {
+    (
+      input: PermissionsShape<Resources, Subject, Context>,
+    ): ScopedDefinedPermissions<Resources, Subject, Context>;
+    (
+      input: NestedScopedPermissionsInput<Resources, Subject, Context>,
+    ): ScopedDefinedPermissions<Resources, Subject, Context>;
+    (input: Input): ScopedDefinedPermissions<Resources, Subject, Context>;
+  };
+};
+
+export type PermissionsForSubject<
+  Resources extends ResourcesShape,
+  Subject,
+  Context,
+> = {
+  from: <const Defs extends RoleMap<Resources, Subject, Context>>(
+    roles: Defs,
+  ) => DefinedPermissions<
     Resources,
     Subject,
     Context,
     SingleTenantCanonical<Resources, Subject, Context, Defs>,
     'single-tenant'
   >;
+  with: <Input>(
+    interpreter: PermissionDefinitionInterpreter<
+      Input,
+      NoInfer<Resources>,
+      Subject,
+      Context
+    >,
+  ) => InterpretingBuilder<Resources, Subject, Context, Input>;
+};
+
+export type PermissionsWithResources<Resources extends ResourcesShape> = {
+  forSubject: <Subject, Context = undefined>() => PermissionsForSubject<
+    Resources,
+    Subject,
+    Context
+  >;
 };
 
 /**
- * Builder returned by `definePermissions<Subject, Context>()`.
- * Apply it with resources and role definitions (and an optional resolver).
- */
-export type PermissionBuilder<
-  Subject,
-  Context = undefined,
-> = DefinePermissionsApply<Subject, Context>;
-
-/**
- * Creates a permission builder for the given subject (and optional context).
+ * Declares permissions for a resource registry.
  *
- * Single-tenant apps pass roles directly (no scope wrapper). The definition
- * is normalized internally to `{ '*': roleMap }`.
- *
- * Multi-tenant apps pass `{ resolver: scopedPermissions() }` from
- * `@permora/core/scoped` as the third argument.
+ * Resources are inferred from the value; Subject/Context are fixed in
+ * `.forSubject()`. Single-tenant apps call `.from(roleMap)`. Multi-tenant
+ * apps chain `.with(scopedPermissions()).from(input)` (import the interpreter
+ * from `@permora/core/scoped`).
  *
  * @example
- * const permissionBuilder = definePermissions<User>();
- * const permissions = permissionBuilder(resources, {
- *   viewer: { project: ['read'] },
- *   editor: {
- *     extends: ['viewer'],
- *     project: ['update'],
- *   },
- * });
+ * const permissions = definePermissions({ resources })
+ *   .forSubject<User>()
+ *   .from({
+ *     viewer: { project: ['read'] },
+ *     editor: {
+ *       extends: ['viewer'],
+ *       project: ['update'],
+ *     },
+ *   });
  *
  * @example
- * const permissionBuilder = definePermissions<User>();
- * const permissions = permissionBuilder(
- *   resources,
- *   { acme: { viewer: { project: ['read'] } } },
- *   { resolver },
- * );
+ * import { scopedPermissions } from '@permora/core/scoped';
+ *
+ * const permissions = definePermissions({ resources })
+ *   .forSubject<User>()
+ *   .with(scopedPermissions())
+ *   .from({
+ *     '*': { viewer: { project: ['read'] } },
+ *     'org:acme': { admin: { project: ['*'] } },
+ *   });
  */
 export function definePermissions<
-  Subject,
-  Context = undefined,
->(): PermissionBuilder<Subject, Context> {
-  const apply = <const Resources extends ResourcesShape, Input>(
-    resources: Resources,
-    input: Input,
-    options?: DefinePermissionsOptions<Input, Resources, Subject, Context>,
-  ):
-    | DefinedPermissions<
-        Resources,
-        Subject,
-        Context,
-        SingleTenantCanonical<
-          Resources,
-          Subject,
-          Context,
-          RoleMap<Resources, Subject, Context>
-        >,
-        'single-tenant'
-      >
-    | DefinedPermissions<
-        Resources,
-        Subject,
-        Context,
-        PermissionsShape<Resources, Subject, Context>,
-        'scoped'
-      > => {
-    if (options?.resolver) {
-      const definitions = options.resolver.interpret(input, { resources });
-      validateDefinition(resources, definitions as AnyPermissionsDefinition);
-      return definitions as DefinedPermissions<
-        Resources,
-        Subject,
-        Context,
-        PermissionsShape<Resources, Subject, Context>,
-        'scoped'
-      >;
-    }
+  const Resources extends ResourcesShape,
+>(options: {
+  readonly resources: Resources;
+}): PermissionsWithResources<Resources> {
+  const { resources } = options;
 
-    const canonical = { [DEFAULT_SCOPE]: input };
-    return canonical as DefinedPermissions<
-      Resources,
-      Subject,
-      Context,
-      SingleTenantCanonical<
-        Resources,
-        Subject,
-        Context,
-        RoleMap<Resources, Subject, Context>
-      >,
-      'single-tenant'
-    >;
+  return {
+    forSubject: <Subject, Context = undefined>() =>
+      ({
+        from: <const Defs extends RoleMap<Resources, Subject, Context>>(
+          roles: Defs,
+        ) =>
+          ({ [DEFAULT_SCOPE]: roles }) as DefinedPermissions<
+            Resources,
+            Subject,
+            Context,
+            SingleTenantCanonical<Resources, Subject, Context, Defs>,
+            'single-tenant'
+          >,
+        with: <Input>(
+          interpreter: PermissionDefinitionInterpreter<
+            Input,
+            NoInfer<Resources>,
+            Subject,
+            Context
+          >,
+        ) =>
+          ({
+            from: (input: Input) => {
+              const definitions = interpreter.interpret(input, { resources });
+              validateDefinition(
+                resources,
+                definitions as AnyPermissionsDefinition,
+              );
+              return definitions as ScopedDefinedPermissions<
+                Resources,
+                Subject,
+                Context
+              >;
+            },
+          }) as InterpretingBuilder<Resources, Subject, Context, Input>,
+      }) as PermissionsForSubject<Resources, Subject, Context>,
   };
-
-  return apply as DefinePermissionsApply<Subject, Context>;
 }

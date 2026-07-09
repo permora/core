@@ -9,9 +9,7 @@ type User = { id: string };
 type Project = { id: string; ownerId: string };
 
 const resources = defineResources({
-  project: defineResource<Project>({
-    actions: ['read', 'update', 'delete'],
-  }),
+  project: defineResource<Project>().actions(['read', 'update', 'delete']),
 });
 
 describe('definePermissionInterpreter', () => {
@@ -25,7 +23,7 @@ describe('definePermissionInterpreter', () => {
   });
 });
 
-describe('definePermissions resolver option', () => {
+describe('definePermissions .with(interpreter)', () => {
   const prefixInterpreter = definePermissionInterpreter<
     Record<string, Record<string, { project: string[] }>>
   >({
@@ -40,44 +38,41 @@ describe('definePermissions resolver option', () => {
     },
   });
 
-  it('transforms custom input through a resolver', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(
-      resources,
-      {
+  it('transforms custom input through an interpreter', () => {
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(prefixInterpreter)
+      .from({
         acme: { viewer: { project: ['read'] } },
-      },
-      { resolver: prefixInterpreter },
-    );
+      });
 
     expect(permissions['tenant:acme'].viewer).toEqual({
       project: ['read'],
     });
   });
 
-  it('validates resolver output at definition time', () => {
+  it('validates interpreter output at definition time', () => {
     const badInterpreter = definePermissionInterpreter({
       interpret: () => ({
         '*': { editor: { project: ['unknown-action'] } },
       }),
     });
 
-    const permissionBuilder = definePermissions<User>();
-
     expect(() =>
-      permissionBuilder(resources, {}, { resolver: badInterpreter }),
+      definePermissions({ resources })
+        .forSubject<User>()
+        .with(badInterpreter)
+        .from({}),
     ).toThrow(InvalidPermissionDefinitionError);
   });
 
   it('works end-to-end with createAuthorization', async () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(
-      resources,
-      {
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(prefixInterpreter)
+      .from({
         acme: { viewer: { project: ['read'] } },
-      },
-      { resolver: prefixInterpreter },
-    );
+      });
 
     const authz = createAuthorization({ resources, permissions });
     const session = authz.session({

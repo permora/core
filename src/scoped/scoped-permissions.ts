@@ -27,15 +27,13 @@ export type ScopedPermissionsOptions = {
  * @example
  * import { scopedPermissions } from '@permora/core/scoped';
  *
- * const permissionBuilder = definePermissions<User>();
- * const permissions = permissionBuilder(
- *   resources,
- *   {
+ * const permissions = definePermissions({ resources })
+ *   .forSubject<User>()
+ *   .with(scopedPermissions())
+ *   .from({
  *     '*': { viewer: { project: ['read'] } },
  *     'org:acme': { admin: { project: ['*'] } },
- *   },
- *   { resolver: scopedPermissions() },
- * );
+ *   });
  */
 export function scopedPermissions<Subject = unknown, Context = undefined>(
   options: ScopedPermissionsOptions = {},

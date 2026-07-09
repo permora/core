@@ -7,9 +7,7 @@ type User = { id: string };
 type Project = { id: string; ownerId: string };
 
 const resources = defineResources({
-  project: defineResource<Project>({
-    actions: ['read', 'update', 'delete'],
-  }),
+  project: defineResource<Project>().actions(['read', 'update', 'delete']),
 });
 
 describe('definePermissions', () => {
@@ -18,8 +16,9 @@ describe('definePermissions', () => {
       viewer: { project: ['read'] },
     } as const;
 
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(resources, definition);
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .from(definition);
 
     expect(permissions).toEqual({
       [DEFAULT_SCOPE]: definition,
@@ -36,14 +35,15 @@ describe('definePermissions', () => {
       resource: Project;
     }) => resource.ownerId === subject.id;
 
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(resources, {
-      viewer: { project: ['read'] },
-      editor: {
-        extends: ['viewer'],
-        project: ['update', { action: 'delete', when }],
-      },
-    });
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .from({
+        viewer: { project: ['read'] },
+        editor: {
+          extends: ['viewer'],
+          project: ['update', { action: 'delete', when }],
+        },
+      });
 
     const editor = permissions[DEFAULT_SCOPE].editor;
     expect(editor.extends).toEqual(['viewer']);

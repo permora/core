@@ -78,7 +78,11 @@ describe('resolveRole', () => {
 
       expect(resolved?.sourceScope).toBe('org:acme');
       expect(resolved?.definition.extends).toEqual(['viewer']);
-      expect(resolved?.definition['project']).toEqual(['read', 'update', 'read']);
+      expect(resolved?.definition['project']).toEqual([
+        'read',
+        'update',
+        'read',
+      ]);
     });
 
     it('fallback: false returns undefined when role is missing in scope', () => {
@@ -108,7 +112,11 @@ describe('resolveRole', () => {
 
       expect(resolved?.sourceScope).toBe('org:acme');
       expect(resolved?.definition.extends).toEqual(['viewer']);
-      expect(resolved?.definition['project']).toEqual(['read', 'update', 'read']);
+      expect(resolved?.definition['project']).toEqual([
+        'read',
+        'update',
+        'read',
+      ]);
     });
 
     it('ignores flags when scope is "*"', () => {

@@ -12,18 +12,14 @@ type User = { id: string };
 type Project = { id: string };
 
 const resources = defineResources({
-  project: defineResource<Project>({
-    actions: ['read', 'update', 'delete'],
-  }),
-  invoice: defineResource<{ id: string }>({
-    actions: ['read', 'approve'],
-  }),
+  project: defineResource<Project>().actions(['read', 'update', 'delete']),
+  invoice: defineResource<{ id: string }>().actions(['read', 'approve']),
 });
 
-const permissionBuilder = definePermissions<User>();
-const permissions = permissionBuilder(
-  resources,
-  {
+const permissions = definePermissions({ resources })
+  .forSubject<User>()
+  .with(scopedPermissions())
+  .from({
     '*': {
       viewer: { project: ['read'] },
       admin: {
@@ -35,9 +31,7 @@ const permissions = permissionBuilder(
     'org:acme': {
       admin: { invoice: ['approve'] },
     },
-  },
-  { resolver: scopedPermissions() },
-);
+  });
 
 describe('scopeResolution via createAuthorization', () => {
   describe('default (fallback: true, merge: false)', () => {
@@ -127,18 +121,17 @@ describe('scopeResolution via createAuthorization', () => {
   });
 
   describe('fallback: false + merge: true', () => {
-    const mergePermissions = permissionBuilder(
-      resources,
-      {
+    const mergePermissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(scopedPermissions())
+      .from({
         '*': {
           admin: { project: ['update'], invoice: ['read'] },
         },
         'org:acme': {
           admin: { invoice: ['approve'] },
         },
-      },
-      { resolver: scopedPermissions() },
-    );
+      });
 
     const authz = createAuthorization({
       resources,

@@ -2,9 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { evaluate } from '../../src/evaluator';
 import { createGrantIndex } from '../../src/grants';
 import type { ResolvedRole } from '../../src/roles';
+import { testResources } from '../fixtures/resources';
 
 function indexOf(definition: ResolvedRole['definition']) {
-  return createGrantIndex([{ sourceScope: '*', role: 'tester', definition }]);
+  return createGrantIndex(
+    [{ sourceScope: '*', role: 'tester', definition }],
+    testResources,
+  );
 }
 
 function baseInput(grants: ReturnType<typeof indexOf>) {

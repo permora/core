@@ -13,9 +13,7 @@ type User = { id: string };
 type Invoice = { id: string; amount: number };
 
 const resources = defineResources({
-  invoice: defineResource<Invoice>({
-    actions: ['read', 'approve', 'create'],
-  }),
+  invoice: defineResource<Invoice>().actions(['read', 'approve', 'create']),
 });
 
 describe('isRoleDefinition', () => {
@@ -89,29 +87,25 @@ describe('flattenNestedScopes', () => {
 
 describe('scopedPermissions', () => {
   it('accepts flat scoped definitions', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(
-      resources,
-      {
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(scopedPermissions())
+      .from({
         'org:acme': { admin: { invoice: ['read'] } },
-      },
-      { resolver: scopedPermissions() },
-    );
+      });
 
     expect(permissions['org:acme'].admin).toEqual({ invoice: ['read'] });
   });
 
   it('accepts nested scoped definitions', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(
-      resources,
-      {
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(scopedPermissions({ nested: true }))
+      .from({
         arasaka: {
           staging: { admin: { invoice: ['create', 'read'] } },
         },
-      },
-      { resolver: scopedPermissions({ nested: true }) },
-    );
+      });
 
     expect(permissions['arasaka:staging'].admin).toEqual({
       invoice: ['create', 'read'],
@@ -119,16 +113,14 @@ describe('scopedPermissions', () => {
   });
 
   it('uses custom separator when nested is true', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(
-      resources,
-      {
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(scopedPermissions({ nested: true, separator: '__' }))
+      .from({
         arasaka: {
           staging: { admin: { invoice: ['read'] } },
         },
-      },
-      { resolver: scopedPermissions({ nested: true, separator: '__' }) },
-    );
+      });
 
     expect(permissions['arasaka__staging'].admin).toEqual({
       invoice: ['read'],
@@ -136,30 +128,26 @@ describe('scopedPermissions', () => {
   });
 
   it('ignores separator in flat mode', () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(
-      resources,
-      {
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(scopedPermissions({ separator: '__' }))
+      .from({
         'org:acme': { admin: { invoice: ['read'] } },
-      },
-      { resolver: scopedPermissions({ separator: '__' }) },
-    );
+      });
 
     expect(permissions['org:acme'].admin).toEqual({ invoice: ['read'] });
     expect(permissions['org__acme']).toBeUndefined();
   });
 
   it('resolves sessions with custom separator scope', async () => {
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(
-      resources,
-      {
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(scopedPermissions({ nested: true, separator: '__' }))
+      .from({
         arasaka: {
           staging: { admin: { invoice: ['read'] } },
         },
-      },
-      { resolver: scopedPermissions({ nested: true, separator: '__' }) },
-    );
+      });
 
     const authz = createAuthorization({ resources, permissions });
     const session = authz.session({
@@ -180,10 +168,10 @@ describe('scopedPermissions', () => {
       resource: Invoice;
     }) => resource.amount <= 100;
 
-    const permissionBuilder = definePermissions<User>();
-    const permissions = permissionBuilder(
-      resources,
-      {
+    const permissions = definePermissions({ resources })
+      .forSubject<User>()
+      .with(scopedPermissions({ nested: true }))
+      .from({
         arasaka: {
           staging: {
             approver: {
@@ -193,9 +181,7 @@ describe('scopedPermissions', () => {
             reader: { invoice: ['read'] },
           },
         },
-      },
-      { resolver: scopedPermissions({ nested: true }) },
-    );
+      });
 
     const authz = createAuthorization({ resources, permissions });
     const session = authz.session({

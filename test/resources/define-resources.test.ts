@@ -6,9 +6,7 @@ type Project = { id: string; ownerId: string };
 describe('defineResources', () => {
   it('returns the definition unchanged', () => {
     const definition = {
-      project: defineResource<Project>({
-        actions: ['create', 'read'],
-      }),
+      project: defineResource<Project>().actions(['create', 'read']),
     };
 
     const resources = defineResources(definition);
@@ -19,8 +17,8 @@ describe('defineResources', () => {
 
   it('supports multiple resources', () => {
     const resources = defineResources({
-      project: defineResource<Project>({ actions: ['read'] }),
-      invoice: defineResource<{ id: string }>({ actions: ['read', 'approve'] }),
+      project: defineResource<Project>().actions(['read']),
+      invoice: defineResource<{ id: string }>().actions(['read', 'approve']),
     });
 
     expect(Object.keys(resources)).toEqual(['project', 'invoice']);
@@ -29,9 +27,7 @@ describe('defineResources', () => {
 
 describe('defineResource', () => {
   it('declares actions and phantom instance type', () => {
-    const project = defineResource<Project>({
-      actions: ['read', 'update'],
-    });
+    const project = defineResource<Project>().actions(['read', 'update']);
 
     expect(project.actions).toEqual(['read', 'update']);
     expect(project.resource).toBeUndefined();

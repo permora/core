@@ -14,12 +14,16 @@ import type { ResourcesShape } from './resource.types';
  * } as const;
  *
  * const resources = defineResources({
- *   [ResourceNames.Project]: defineResource<Project>({
- *     actions: ['create', 'read', 'update', 'delete'],
- *   }),
- *   [ResourceNames.Invoice]: defineResource<Invoice>({
- *     actions: ['read', 'approve'],
- *   }),
+ *   [ResourceNames.Project]: defineResource<Project>().actions([
+ *     'create',
+ *     'read',
+ *     'update',
+ *     'delete',
+ *   ]),
+ *   [ResourceNames.Invoice]: defineResource<Invoice>().actions([
+ *     'read',
+ *     'approve',
+ *   ]),
  * });
  */
 export function defineResources<const Resources extends ResourcesShape>(
