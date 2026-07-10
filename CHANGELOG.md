@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-10
+
 ### Added
 
 - Type-safe authorization engine: `defineResources`, `definePermissions` and `createAuthorization`
@@ -46,3 +48,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 - Manual `resource: {} as T` in `defineResources` entries — still supported; prefer `defineResource<T>().actions([...])`
+
