@@ -1,5 +1,5 @@
 /**
- * Shared SPEC §41 acceptance fixture (resources + scoped permissions + session).
+ * Shared acceptance fixture (resources + scoped permissions + session).
  * Used by acceptance.test.ts (runtime) and acceptance.test-d.ts (type safety).
  */
 import {

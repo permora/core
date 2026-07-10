@@ -102,8 +102,6 @@ createAuthorization({
 
 When `merge: true`, `extends` and permission arrays are combined (OR semantics at evaluation). Parent roles referenced via merged `extends` are still resolved with the same `scopeResolution` flags.
 
-Normative details in [SPEC.md](./SPEC.md) (sections 8–9).
-
 ## Requirements
 
 - Node.js >= 20
@@ -422,8 +420,6 @@ All errors extend `AuthorizationError` and expose a `code`:
 | `PortableInlineConditionError`     | `AUTHZ_PORTABLE_INLINE_CONDITION`     |
 | `PortableSessionInvalidError`      | `AUTHZ_PORTABLE_SESSION_INVALID`      |
 | `PortableSessionStaleError`        | `AUTHZ_PORTABLE_SESSION_STALE`        |
-
-See [SPEC.md](./SPEC.md) for the full normative specification.
 
 ## Examples
 

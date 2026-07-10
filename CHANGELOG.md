@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `definePermissions` is a fluent builder: `definePermissions({ resources }).forSubject<S>().from(...)` / `.with(interpreter).from(...)` (replaces the curried `definePermissions<S>()(resources, ...)` form)
 - Terminology standardized on **interpreter** (not resolver) for permission definition transforms; removed `PermissionResolver` and `DefinePermissionsOptions`
 - `session.resolvedPermissions()` renamed to `session.permissionGraph()`; types `SessionPermissionGraph`, `PermissionGraphRole`, `PermissionGraphEntry` (replaces `SessionResolvedPermissions` / `ResolvedPermissionSnapshot` / `ResolvedPermissionEntry`)
-- README and SPEC examples updated for the builder pattern, `defineResource`, and typed resource name conventions
+- README and examples updated for the builder pattern, `defineResource`, and typed resource name conventions
 - `scopedPermissions({ separator })` is only applied when `nested: true`; in flat mode scope keys must be written exactly as they appear at runtime
 - `UnknownRoleError` message omits the default-scope fallback hint when `scopeResolution.fallback` is `false`
 

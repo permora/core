@@ -49,7 +49,7 @@ export function createAuthorization<
   plugins?: readonly AuthorizationPlugin<Subject, Context>[];
   /**
    * Controls how roles are resolved for non-default session scopes.
-   * Defaults to `{ fallback: true, merge: false }` (normative SPEC §8–9).
+   * Defaults to `{ fallback: true, merge: false }`.
    */
   scopeResolution?: ScopeResolutionOptions;
 }): Authorization<

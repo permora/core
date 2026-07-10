@@ -2,8 +2,6 @@
 
 Step-by-step guides for configuring `@permora/core` and the behavior you should expect at runtime. Each file includes a **configuration**, **session inputs**, and **expected outcomes**.
 
-These examples are illustrative. Normative behavior is defined in [SPEC.md](../SPEC.md).
-
 Each guide has a corresponding end-to-end test in [`test/e2e/`](../test/e2e/) (e.g. `examples/00-getting-started.md` → `test/e2e/00-getting-started.test.ts`).
 
 ## Reading order

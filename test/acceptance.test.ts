@@ -1,6 +1,5 @@
 /**
- * End-to-end acceptance test reproducing the SPEC §41 scenario through
- * the public API only (runtime behavior).
+ * End-to-end acceptance test covering the public API (runtime behavior).
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -10,7 +9,7 @@ import {
 } from './fixtures/acceptance';
 import type { Invoice } from './fixtures/acceptance';
 
-describe('SPEC §41 acceptance', () => {
+describe('acceptance', () => {
   const session = createAcceptanceSession();
   const project = acceptanceProject;
   const invoice = acceptanceInvoice;

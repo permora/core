@@ -1,13 +1,13 @@
 /**
- * Type-safety acceptance tests for the public session API (SPEC §35),
- * against the same SPEC §41 fixture used by acceptance.test.ts.
+ * Type-safety acceptance tests for the public session API,
+ * against the same fixture used by acceptance.test.ts.
  */
 import { describe, expectTypeOf, it } from 'vitest';
 import { createAcceptanceSession, type User } from './fixtures/acceptance';
 
 const session = createAcceptanceSession();
 
-describe('session type safety (SPEC §35)', () => {
+describe('session type safety', () => {
   it('accepts valid resource/action pairs', () => {
     expectTypeOf(
       session.can('project', 'read'),

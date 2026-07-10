@@ -46,7 +46,7 @@ export async function runPluginHook<Subject, Context>(
 /**
  * Runs `onSessionCreate` synchronously when possible. Async handlers are
  * scheduled without blocking `authz.session()` (session creation stays
- * synchronous per SPEC §30); rejections propagate as unhandled rejections.
+ * synchronous); rejections propagate as unhandled rejections.
  */
 export function runSessionCreateHooks<Subject, Context>(
   plugins: readonly AuthorizationPlugin<Subject, Context>[] | undefined,

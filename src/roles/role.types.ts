@@ -42,7 +42,7 @@ export type ScopeResolutionOptions = {
 };
 
 /**
- * Default scope resolution — matches the normative behavior in SPEC §8–9.
+ * Default scope resolution: `fallback: true`, `merge: false`.
  */
 export const DEFAULT_SCOPE_RESOLUTION: Required<ScopeResolutionOptions> = {
   fallback: true,
