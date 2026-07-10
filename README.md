@@ -1,6 +1,6 @@
 # @permora/core
 
-![CI](https://github.com/cicerotcv/permora/actions/workflows/ci.yml/badge.svg?branch=main)
+![CI](https://github.com/permora/core/actions/workflows/ci.yml/badge.svg?branch=main)
 ![node](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)
 ![typescript](https://img.shields.io/badge/typescript-5.8-3178C6?logo=typescript&logoColor=white)
 ![tsup](https://img.shields.io/badge/tsup-8-FFEA00?logo=esbuild&logoColor=black)

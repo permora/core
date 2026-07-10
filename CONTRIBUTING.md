@@ -58,8 +58,8 @@ The workflow will bump the version, update CHANGELOG, create a GitHub Release, a
 
    | Field                | Value                  |
    | -------------------- | ---------------------- |
-   | Organization or user | `cicerotcv`            |
-   | Repository           | `permora`              |
+   | Organization or user | `permora`              |
+   | Repository           | `core`                 |
    | Workflow filename    | `bump-and-release.yml` |
    | Environment name     | _(leave empty)_        |
 

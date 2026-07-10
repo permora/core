@@ -38,7 +38,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cicerotcv/permora.git"
+    "url": "git+https://github.com/permora/core.git"
   },
   "engines": {
     "node": ">=20"
