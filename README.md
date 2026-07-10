@@ -1,10 +1,11 @@
-# @permora/core
+# Permora - Core
 
 ![CI](https://github.com/permora/core/actions/workflows/ci.yml/badge.svg?branch=main)
 ![node](https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white)
 ![typescript](https://img.shields.io/badge/typescript-5.8-3178C6?logo=typescript&logoColor=white)
 ![tsup](https://img.shields.io/badge/tsup-8-FFEA00?logo=esbuild&logoColor=black)
 ![prettier](https://img.shields.io/badge/prettier-3-F7B93E?logo=prettier&logoColor=white)
+[![buy-me-a-bitcoffee](https://img.shields.io/badge/Buy%20Me%20a%20BitCoffee-f7931a?logo=bitcoin&logoColor=white&color=f7931a&style=flat&label=Donate)](https://buymeabitcoffee.vercel.app/btc/bc1q7fvyplr428phtxv2mvqncgjlzs3u9tuc5660fr?identifier=Permora&lightning=modularactress47%40walletofsatoshi.com)
 
 Type-safe authorization engine based on scopes, roles, inheritance, permissions and dynamic conditions. Framework-agnostic, default deny, zero runtime dependencies.
 
