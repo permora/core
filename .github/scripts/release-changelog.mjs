@@ -15,8 +15,12 @@ if (content.includes(`## [${version}]`)) {
   process.exit(1);
 }
 
-const unreleasedRegex = /^## \[Unreleased\]\s*\n([\s\S]*?)(?=^## \[)/m;
-const match = content.match(unreleasedRegex);
+// Capture Unreleased body until the next ## [version] section, or EOF on
+// the first release (when no prior version heading exists yet).
+const unreleasedWithNext = /^## \[Unreleased\]\s*\n([\s\S]*?)(?=^## \[)/m;
+const unreleasedUntilEof = /^## \[Unreleased\]\s*\n([\s\S]*)$/m;
+const match =
+  content.match(unreleasedWithNext) ?? content.match(unreleasedUntilEof);
 
 if (!match) {
   console.error('Could not find ## [Unreleased] section');
@@ -39,10 +43,7 @@ if (!contentLines) {
 
 const date = new Date().toISOString().slice(0, 10);
 const newSection = `## [${version}] - ${date}\n\n${unreleasedBody}\n\n`;
-const updated = content.replace(
-  unreleasedRegex,
-  `## [Unreleased]\n\n${newSection}`,
-);
+const updated = content.replace(match[0], `## [Unreleased]\n\n${newSection}`);
 
 writeFileSync(changelogPath, updated);
 process.stdout.write(unreleasedBody.trim());
