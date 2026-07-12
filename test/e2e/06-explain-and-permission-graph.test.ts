@@ -45,12 +45,8 @@ describe('e2e / 06 explain and permission graph', () => {
     );
   });
 
-  it('explains unconditional grant match', async () => {
-    const explanation = await session.explain(
-      'project',
-      'delete',
-      foreignProject,
-    );
+  it('explains unconditional grant match', () => {
+    const explanation = session.explain('project', 'delete', foreignProject);
 
     expect(explanation).toMatchObject({
       allowed: true,
@@ -63,24 +59,20 @@ describe('e2e / 06 explain and permission graph', () => {
     });
   });
 
-  it('explains conditional denial', async () => {
-    const explanation = await session.explain(
-      'invoice',
-      'approve',
-      largeInvoice,
-    );
+  it('explains conditional denial', () => {
+    const explanation = session.explain('invoice', 'approve', largeInvoice);
 
     expect(explanation.allowed).toBe(false);
     expect(explanation.reason).toBe('ALL_CONDITIONS_FAILED');
   });
 
-  it('filters allowedActions after condition evaluation', async () => {
-    await expect(
-      session.allowedActions('project', foreignProject),
-    ).resolves.toEqual(['read', 'update', 'delete']);
+  it('filters allowedActions after condition evaluation', () => {
+    expect(session.allowedActions('project', foreignProject)).toEqual([
+      'read',
+      'update',
+      'delete',
+    ]);
 
-    await expect(
-      session.allowedActions('invoice', largeInvoice),
-    ).resolves.toEqual(['read']);
+    expect(session.allowedActions('invoice', largeInvoice)).toEqual(['read']);
   });
 });

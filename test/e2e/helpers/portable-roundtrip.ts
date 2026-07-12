@@ -20,7 +20,7 @@ export type PortableSessionSource = {
   toPortable(): unknown;
 };
 
-export async function roundtripPortable<
+export function roundtripPortable<
   Resources extends ResourcesShape,
   Context = Record<string, never>,
 >(
@@ -39,11 +39,11 @@ export async function roundtripPortable<
   });
 }
 
-export async function expectSameDecisions(
+export function expectSameDecisions(
   original: CanSession,
   restored: CanSession,
   cases: readonly CanMatrixCase[],
-): Promise<void> {
-  await expectCanMatrix(original, cases);
-  await expectCanMatrix(restored, cases);
+): void {
+  expectCanMatrix(original, cases);
+  expectCanMatrix(restored, cases);
 }

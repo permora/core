@@ -32,13 +32,11 @@ function evaluationHookInput(input: EvaluationInput) {
  * Exceptions thrown by conditions propagate to the caller; they are never
  * silently converted into DENY.
  */
-export async function evaluate(
-  input: EvaluationInput,
-): Promise<EvaluationResult> {
+export function evaluate(input: EvaluationInput): EvaluationResult {
   const hookInput = evaluationHookInput(input);
   const plugins = input.plugins;
 
-  await runPluginHook(plugins, 'onEvaluationStart', hookInput);
+  runPluginHook(plugins, 'onEvaluationStart', hookInput);
 
   const candidates = lookupGrants(input.grants, input.resource, input.action);
 
@@ -49,7 +47,7 @@ export async function evaluate(
       reason: 'NO_MATCHING_GRANT',
     };
 
-    await notifyEvaluationEnd(plugins, hookInput, result);
+    notifyEvaluationEnd(plugins, hookInput, result);
     return result;
   }
 
@@ -58,7 +56,7 @@ export async function evaluate(
   for (const grant of candidates) {
     if (grant.when === undefined) {
       evaluatedGrants.push({ grant, matched: true });
-      await notifyGrantEvaluation(plugins, hookInput, grant, true);
+      notifyGrantEvaluation(plugins, hookInput, grant, true);
 
       const result: EvaluationResult = {
         allowed: true,
@@ -67,11 +65,11 @@ export async function evaluate(
         reason: 'GRANT_MATCHED',
       };
 
-      await notifyEvaluationEnd(plugins, hookInput, result);
+      notifyEvaluationEnd(plugins, hookInput, result);
       return result;
     }
 
-    const matched = await grant.when({
+    const matched = grant.when({
       subject: input.subject,
       scope: input.scope,
       resource: input.resourceInstance,
@@ -79,7 +77,7 @@ export async function evaluate(
     });
 
     evaluatedGrants.push({ grant, matched });
-    await notifyGrantEvaluation(plugins, hookInput, grant, matched);
+    notifyGrantEvaluation(plugins, hookInput, grant, matched);
 
     if (matched) {
       const result: EvaluationResult = {
@@ -89,7 +87,7 @@ export async function evaluate(
         reason: 'CONDITION_MATCHED',
       };
 
-      await notifyEvaluationEnd(plugins, hookInput, result);
+      notifyEvaluationEnd(plugins, hookInput, result);
       return result;
     }
   }
@@ -100,6 +98,6 @@ export async function evaluate(
     reason: 'ALL_CONDITIONS_FAILED',
   };
 
-  await notifyEvaluationEnd(plugins, hookInput, result);
+  notifyEvaluationEnd(plugins, hookInput, result);
   return result;
 }

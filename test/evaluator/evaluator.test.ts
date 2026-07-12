@@ -25,31 +25,31 @@ function baseInput(grants: ReturnType<typeof indexOf>) {
 }
 
 describe('evaluate', () => {
-  it('allows via exact grant without condition', async () => {
-    const result = await evaluate(baseInput(indexOf({ project: ['read'] })));
+  it('allows via exact grant without condition', () => {
+    const result = evaluate(baseInput(indexOf({ project: ['read'] })));
 
     expect(result.allowed).toBe(true);
     expect(result.reason).toBe('GRANT_MATCHED');
     expect(result.grantedBy?.action).toBe('read');
   });
 
-  it('allows via wildcard grant', async () => {
-    const result = await evaluate(baseInput(indexOf({ project: ['*'] })));
+  it('allows via wildcard grant', () => {
+    const result = evaluate(baseInput(indexOf({ project: ['*'] })));
 
     expect(result.allowed).toBe(true);
     expect(result.grantedBy?.action).toBe('*');
   });
 
-  it('denies with default deny when there are no grants', async () => {
-    const result = await evaluate(baseInput(indexOf({})));
+  it('denies with default deny when there are no grants', () => {
+    const result = evaluate(baseInput(indexOf({})));
 
     expect(result.allowed).toBe(false);
     expect(result.reason).toBe('NO_MATCHING_GRANT');
     expect(result.evaluatedGrants).toEqual([]);
   });
 
-  it('denies when all conditions fail', async () => {
-    const result = await evaluate(
+  it('denies when all conditions fail', () => {
+    const result = evaluate(
       baseInput(indexOf({ project: [{ action: 'read', when: () => false }] })),
     );
 
@@ -59,8 +59,8 @@ describe('evaluate', () => {
     expect(result.evaluatedGrants[0]?.matched).toBe(false);
   });
 
-  it('applies OR semantics between grants', async () => {
-    const result = await evaluate(
+  it('applies OR semantics between grants', () => {
+    const result = evaluate(
       baseInput(
         indexOf({
           project: [
@@ -76,10 +76,10 @@ describe('evaluate', () => {
     expect(result.evaluatedGrants).toHaveLength(2);
   });
 
-  it('short-circuits after the first allowing grant', async () => {
+  it('short-circuits after the first allowing grant', () => {
     const secondCondition = vi.fn(() => true);
 
-    const result = await evaluate(
+    const result = evaluate(
       baseInput(
         indexOf({
           project: ['read', { action: 'read', when: secondCondition }],
@@ -92,30 +92,10 @@ describe('evaluate', () => {
     expect(result.evaluatedGrants).toHaveLength(1);
   });
 
-  it('supports async conditions resolving true', async () => {
-    const result = await evaluate(
-      baseInput(
-        indexOf({ project: [{ action: 'read', when: async () => true }] }),
-      ),
-    );
-
-    expect(result.allowed).toBe(true);
-  });
-
-  it('supports async conditions resolving false', async () => {
-    const result = await evaluate(
-      baseInput(
-        indexOf({ project: [{ action: 'read', when: async () => false }] }),
-      ),
-    );
-
-    expect(result.allowed).toBe(false);
-  });
-
-  it('propagates exceptions thrown by conditions', async () => {
+  it('propagates exceptions thrown by conditions', () => {
     const boom = new Error('external check failed');
 
-    await expect(
+    expect(() =>
       evaluate(
         baseInput(
           indexOf({
@@ -130,16 +110,16 @@ describe('evaluate', () => {
           }),
         ),
       ),
-    ).rejects.toBe(boom);
+    ).toThrow(boom);
   });
 
-  it('passes subject, scope, resource instance and context to conditions', async () => {
+  it('passes subject, scope, resource instance and context to conditions', () => {
     const when = vi.fn(() => true);
     const subject = { id: 'u1' };
     const instance = { id: 'p1' };
     const context = { flag: true };
 
-    await evaluate({
+    evaluate({
       grants: indexOf({ project: [{ action: 'read', when }] }),
       subject,
       scope: 'org:acme',

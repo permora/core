@@ -139,7 +139,7 @@ describe('scopedPermissions', () => {
     expect(permissions['org__acme']).toBeUndefined();
   });
 
-  it('resolves sessions with custom separator scope', async () => {
+  it('resolves sessions with custom separator scope', () => {
     const permissions = definePermissions({ resources })
       .forSubject<User>()
       .with(scopedPermissions({ nested: true, separator: '__' }))
@@ -156,10 +156,10 @@ describe('scopedPermissions', () => {
       roles: ['admin'],
     });
 
-    await expect(session.can('invoice', 'read')).resolves.toBe(true);
+    expect(session.can('invoice', 'read')).toBe(true);
   });
 
-  it('preserves extends and when through nested interpretation', async () => {
+  it('preserves extends and when through nested interpretation', () => {
     const when = ({
       subject,
       resource,
@@ -190,11 +190,11 @@ describe('scopedPermissions', () => {
       roles: ['approver'],
     });
 
-    await expect(
-      session.can('invoice', 'approve', { id: 'i1', amount: 50 }),
-    ).resolves.toBe(true);
-    await expect(
-      session.can('invoice', 'approve', { id: 'i2', amount: 500 }),
-    ).resolves.toBe(false);
+    expect(session.can('invoice', 'approve', { id: 'i1', amount: 50 })).toBe(
+      true,
+    );
+    expect(session.can('invoice', 'approve', { id: 'i2', amount: 500 })).toBe(
+      false,
+    );
   });
 });

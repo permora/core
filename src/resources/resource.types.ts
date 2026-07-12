@@ -7,7 +7,7 @@ export type ResourceCondition<Subject, Resource, Context> = (input: {
   scope: string;
   resource: Resource;
   context: Context;
-}) => boolean | Promise<boolean>;
+}) => boolean;
 
 /**
  * Erased condition signature stored on {@link ResourceConfig}.
@@ -19,7 +19,7 @@ export type ResourceConditionFn = (input: {
   scope: string;
   resource: unknown;
   context: unknown;
-}) => boolean | Promise<boolean>;
+}) => boolean;
 
 /**
  * Configuration of a single protected resource type.

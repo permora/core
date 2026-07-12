@@ -100,20 +100,16 @@ export type AuthorizationPlugin<Subject = unknown, Context = unknown> = {
   readonly name?: string;
   readonly onSessionCreate?: (
     context: SessionCreateContext<Subject, Context>,
-  ) => void | Promise<void>;
+  ) => void;
   readonly onEvaluationStart?: (
     context: EvaluationStartContext<Subject, Context>,
-  ) => void | Promise<void>;
+  ) => void;
   readonly onGrantEvaluation?: (
     context: GrantEvaluationContext<Subject, Context>,
-  ) => void | Promise<void>;
+  ) => void;
   readonly onEvaluationEnd?: (
     context: EvaluationEndContext<Subject, Context>,
-  ) => void | Promise<void>;
-  readonly onGranted?: (
-    context: GrantedContext<Subject, Context>,
-  ) => void | Promise<void>;
-  readonly onDenied?: (
-    context: DeniedContext<Subject, Context>,
-  ) => void | Promise<void>;
+  ) => void;
+  readonly onGranted?: (context: GrantedContext<Subject, Context>) => void;
+  readonly onDenied?: (context: DeniedContext<Subject, Context>) => void;
 };

@@ -31,7 +31,7 @@ const permissions = definePermissions({ resources })
   });
 
 describe('plugin integration', () => {
-  it('does not invoke hooks when no plugins are registered', async () => {
+  it('does not invoke hooks when no plugins are registered', () => {
     const authz = createAuthorization({ resources, permissions });
     const onEvaluationStart = vi.fn();
 
@@ -40,7 +40,7 @@ describe('plugin integration', () => {
       roles: ['viewer'],
     });
 
-    await session.can('project', 'read');
+    session.can('project', 'read');
 
     expect(onEvaluationStart).not.toHaveBeenCalled();
   });
@@ -67,7 +67,7 @@ describe('plugin integration', () => {
     });
   });
 
-  it('runs the full evaluation hook cycle on allow', async () => {
+  it('runs the full evaluation hook cycle on allow', () => {
     const order: string[] = [];
     const plugin = definePlugin({
       onEvaluationStart: () => {
@@ -97,12 +97,12 @@ describe('plugin integration', () => {
       roles: ['viewer'],
     });
 
-    await session.can('project', 'read');
+    session.can('project', 'read');
 
     expect(order).toEqual(['start', 'grant', 'end', 'granted']);
   });
 
-  it('runs onDenied when evaluation fails', async () => {
+  it('runs onDenied when evaluation fails', () => {
     const onDenied = vi.fn();
     const plugin = definePlugin({ onDenied });
     const authz = createAuthorization({
@@ -115,7 +115,7 @@ describe('plugin integration', () => {
       roles: ['viewer'],
     });
 
-    await session.can('project', 'update');
+    session.can('project', 'update');
 
     expect(onDenied).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -126,7 +126,7 @@ describe('plugin integration', () => {
     );
   });
 
-  it('fires onGrantEvaluation for each evaluated grant with conditions', async () => {
+  it('fires onGrantEvaluation for each evaluated grant with conditions', () => {
     const onGrantEvaluation = vi.fn();
     const plugin = definePlugin({ onGrantEvaluation });
     const authz = createAuthorization({
@@ -139,7 +139,7 @@ describe('plugin integration', () => {
       roles: ['editor'],
     });
 
-    await session.can('project', 'delete', {
+    session.can('project', 'delete', {
       id: 'p1',
       ownerId: 'other',
     });
@@ -152,7 +152,7 @@ describe('plugin integration', () => {
     );
   });
 
-  it('fires evaluation hooks once per action in allowedActions', async () => {
+  it('fires evaluation hooks once per action in allowedActions', () => {
     const onEvaluationStart = vi.fn();
     const plugin = definePlugin({ onEvaluationStart });
     const authz = createAuthorization({
@@ -165,7 +165,7 @@ describe('plugin integration', () => {
       roles: ['editor'],
     });
 
-    await session.allowedActions('project', {
+    session.allowedActions('project', {
       id: 'p1',
       ownerId: 'u1',
     });
@@ -173,7 +173,7 @@ describe('plugin integration', () => {
     expect(onEvaluationStart).toHaveBeenCalledTimes(3);
   });
 
-  it('propagates plugin errors during evaluation', async () => {
+  it('propagates plugin errors during evaluation', () => {
     const plugin = definePlugin({
       onEvaluationStart: () => {
         throw new Error('audit failed');
@@ -189,8 +189,6 @@ describe('plugin integration', () => {
       roles: ['viewer'],
     });
 
-    await expect(session.can('project', 'read')).rejects.toThrow(
-      'audit failed',
-    );
+    expect(() => session.can('project', 'read')).toThrow('audit failed');
   });
 });

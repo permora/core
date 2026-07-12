@@ -7,7 +7,7 @@ export type AnyCondition = (input: {
   scope: string;
   resource: unknown;
   context: unknown;
-}) => boolean | Promise<boolean>;
+}) => boolean;
 
 /**
  * Normalized internal representation of a permission.

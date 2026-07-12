@@ -16,11 +16,11 @@ export type ConditionInput<Subject, Scope, Resource, Context> = {
 };
 
 /**
- * Sync or async predicate attached to a permission.
+ * Sync predicate attached to a permission.
  */
 export type Condition<Subject, Scope, Resource, Context> = (
   input: ConditionInput<Subject, Scope, Resource, Context>,
-) => boolean | Promise<boolean>;
+) => boolean;
 
 /**
  * A permission grants an action (or every action, via `"*"`) over a

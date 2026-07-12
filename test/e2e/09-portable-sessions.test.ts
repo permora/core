@@ -77,24 +77,24 @@ describe('e2e / 09 portable sessions', () => {
     );
   });
 
-  it('roundtrips JSON portable payload with identical decisions', async () => {
-    const restored = await roundtripPortable(session, {
+  it('roundtrips JSON portable payload with identical decisions', () => {
+    const restored = roundtripPortable(session, {
       resources: testResources,
       context: {},
       wire: 'json',
     });
 
-    await expectSameDecisions(session, restored, decisionMatrix);
+    expectSameDecisions(session, restored, decisionMatrix);
   });
 
-  it('roundtrips compact wire format with identical decisions', async () => {
-    const restored = await roundtripPortable(session, {
+  it('roundtrips compact wire format with identical decisions', () => {
+    const restored = roundtripPortable(session, {
       resources: testResources,
       context: {},
       wire: 'compact',
     });
 
-    await expectSameDecisions(session, restored, decisionMatrix);
+    expectSameDecisions(session, restored, decisionMatrix);
   });
 
   it('throws PortableInlineConditionError for inline when grants', () => {
@@ -130,18 +130,18 @@ describe('e2e / 09 portable sessions', () => {
     ).toThrow(PortableSessionInvalidError);
   });
 
-  it('preserves explain decisions after rehydration', async () => {
-    const restored = await roundtripPortable(session, {
+  it('preserves explain decisions after rehydration', () => {
+    const restored = roundtripPortable(session, {
       resources: testResources,
       context: {},
     });
 
-    const originalExplain = await session.explain(
+    const originalExplain = session.explain(
       'invoice',
       'approve',
       expensiveInvoice,
     );
-    const restoredExplain = await restored.explain(
+    const restoredExplain = restored.explain(
       'invoice',
       'approve',
       expensiveInvoice,
@@ -151,16 +151,14 @@ describe('e2e / 09 portable sessions', () => {
     expect(restoredExplain.reason).toBe(originalExplain.reason);
   });
 
-  it('preserves allowedActions after rehydration', async () => {
-    const restored = await roundtripPortable(session, {
+  it('preserves allowedActions after rehydration', () => {
+    const restored = roundtripPortable(session, {
       resources: testResources,
       context: {},
     });
 
-    await expect(
-      session.allowedActions('project', portableProject),
-    ).resolves.toEqual(
-      await restored.allowedActions('project', portableProject),
+    expect(session.allowedActions('project', portableProject)).toEqual(
+      restored.allowedActions('project', portableProject),
     );
   });
 });

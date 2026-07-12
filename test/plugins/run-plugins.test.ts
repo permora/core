@@ -17,29 +17,28 @@ const hookInput = {
 };
 
 describe('runPluginHook', () => {
-  it('is a no-op when plugins is undefined', async () => {
+  it('is a no-op when plugins is undefined', () => {
     const handler = vi.fn();
 
-    await runPluginHook(undefined, 'onEvaluationStart', hookInput);
+    runPluginHook(undefined, 'onEvaluationStart', hookInput);
 
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it('is a no-op when plugins is empty', async () => {
+  it('is a no-op when plugins is empty', () => {
     const handler = vi.fn();
 
-    await runPluginHook([], 'onEvaluationStart', hookInput);
+    runPluginHook([], 'onEvaluationStart', hookInput);
 
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it('awaits async handlers sequentially', async () => {
+  it('runs handlers sequentially', () => {
     const order: string[] = [];
 
     const plugins: AuthorizationPlugin[] = [
       {
-        onEvaluationStart: async () => {
-          await Promise.resolve();
+        onEvaluationStart: () => {
           order.push('first');
         },
       },
@@ -50,12 +49,12 @@ describe('runPluginHook', () => {
       },
     ];
 
-    await runPluginHook(plugins, 'onEvaluationStart', hookInput);
+    runPluginHook(plugins, 'onEvaluationStart', hookInput);
 
     expect(order).toEqual(['first', 'second']);
   });
 
-  it('propagates errors from handlers', async () => {
+  it('propagates errors from handlers', () => {
     const plugins: AuthorizationPlugin[] = [
       {
         onEvaluationStart: () => {
@@ -64,14 +63,14 @@ describe('runPluginHook', () => {
       },
     ];
 
-    await expect(
+    expect(() =>
       runPluginHook(plugins, 'onEvaluationStart', hookInput),
-    ).rejects.toThrow('plugin failed');
+    ).toThrow('plugin failed');
   });
 });
 
 describe('notifyEvaluationEnd', () => {
-  it('fires onEvaluationEnd then onGranted when allowed', async () => {
+  it('fires onEvaluationEnd then onGranted when allowed', () => {
     const order: string[] = [];
     const plugins: AuthorizationPlugin[] = [
       {
@@ -87,7 +86,7 @@ describe('notifyEvaluationEnd', () => {
       },
     ];
 
-    await notifyEvaluationEnd(plugins, hookInput, {
+    notifyEvaluationEnd(plugins, hookInput, {
       allowed: true,
       reason: 'GRANT_MATCHED',
       evaluatedGrants: [],
@@ -102,7 +101,7 @@ describe('notifyEvaluationEnd', () => {
     expect(order).toEqual(['end', 'granted']);
   });
 
-  it('fires onEvaluationEnd then onDenied when denied', async () => {
+  it('fires onEvaluationEnd then onDenied when denied', () => {
     const order: string[] = [];
     const plugins: AuthorizationPlugin[] = [
       {
@@ -118,7 +117,7 @@ describe('notifyEvaluationEnd', () => {
       },
     ];
 
-    await notifyEvaluationEnd(plugins, hookInput, {
+    notifyEvaluationEnd(plugins, hookInput, {
       allowed: false,
       reason: 'NO_MATCHING_GRANT',
       evaluatedGrants: [],
@@ -129,11 +128,11 @@ describe('notifyEvaluationEnd', () => {
 });
 
 describe('notifyGrantEvaluation', () => {
-  it('passes grant metadata and matched flag', async () => {
+  it('passes grant metadata and matched flag', () => {
     const handler = vi.fn();
     const plugins: AuthorizationPlugin[] = [{ onGrantEvaluation: handler }];
 
-    await notifyGrantEvaluation(
+    notifyGrantEvaluation(
       plugins,
       hookInput,
       {

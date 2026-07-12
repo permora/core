@@ -66,7 +66,7 @@ describe('definePermissions .with(interpreter)', () => {
     ).toThrow(InvalidPermissionDefinitionError);
   });
 
-  it('works end-to-end with createAuthorization', async () => {
+  it('works end-to-end with createAuthorization', () => {
     const permissions = definePermissions({ resources })
       .forSubject<User>()
       .with(prefixInterpreter)
@@ -81,6 +81,6 @@ describe('definePermissions .with(interpreter)', () => {
       roles: ['viewer'],
     });
 
-    await expect(session.can('project', 'read')).resolves.toBe(true);
+    expect(session.can('project', 'read')).toBe(true);
   });
 });

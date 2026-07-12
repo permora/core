@@ -41,7 +41,7 @@ describe('portable sessions', () => {
   const project: Project = { id: 'p1', ownerId: 'user_123' };
   const invoice: Invoice = { id: 'i1', amount: 5_000 };
 
-  it('exports and rehydrates a session with named conditions', async () => {
+  it('exports and rehydrates a session with named conditions', () => {
     const original = authz.session({
       subject: { id: 'user_123', approvalLimit: 10_000 },
       scope: 'org:acme',
@@ -85,15 +85,11 @@ describe('portable sessions', () => {
       context: {},
     });
 
-    await expect(restored.can('project', 'delete', project)).resolves.toBe(
-      true,
-    );
-    await expect(restored.can('invoice', 'approve', invoice)).resolves.toBe(
-      true,
-    );
-    await expect(
+    expect(restored.can('project', 'delete', project)).toBe(true);
+    expect(restored.can('invoice', 'approve', invoice)).toBe(true);
+    expect(
       restored.can('invoice', 'approve', { id: 'i2', amount: 50_000 }),
-    ).resolves.toBe(false);
+    ).toBe(false);
   });
 
   it('throws when exporting inline when conditions', () => {

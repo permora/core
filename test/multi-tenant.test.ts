@@ -63,19 +63,19 @@ describe('multi-tenant authorization', () => {
   const smallInvoice: Invoice = { id: 'i1', amount: 5000 };
   const largeInvoice: Invoice = { id: 'i2', amount: 50_000 };
 
-  it('combines scope overrides with fallback inheritance', async () => {
+  it('combines scope overrides with fallback inheritance', () => {
     const session = authz.session({
       subject,
       scope: 'org:acme',
       roles: ['manager'],
     });
 
-    await expect(session.can('project', 'read')).resolves.toBe(true);
-    await expect(session.can('project', 'update')).resolves.toBe(true);
-    await expect(session.can('invoice', 'read')).resolves.toBe(true);
+    expect(session.can('project', 'read')).toBe(true);
+    expect(session.can('project', 'update')).toBe(true);
+    expect(session.can('invoice', 'read')).toBe(true);
   });
 
-  it('lets a scoped override replace a stricter default-scope condition', async () => {
+  it('lets a scoped override replace a stricter default-scope condition', () => {
     const acmeSession = authz.session({
       subject,
       scope: 'org:acme',
@@ -86,41 +86,29 @@ describe('multi-tenant authorization', () => {
       roles: ['editor'],
     });
 
-    await expect(
-      acmeSession.can('project', 'delete', foreignProject),
-    ).resolves.toBe(true);
-    await expect(
-      defaultSession.can('project', 'delete', foreignProject),
-    ).resolves.toBe(false);
+    expect(acmeSession.can('project', 'delete', foreignProject)).toBe(true);
+    expect(defaultSession.can('project', 'delete', foreignProject)).toBe(false);
   });
 
-  it('evaluates scoped conditional grants against the tenant subject', async () => {
+  it('evaluates scoped conditional grants against the tenant subject', () => {
     const session = authz.session({
       subject,
       scope: 'org:acme',
       roles: ['manager'],
     });
 
-    await expect(session.can('invoice', 'approve', smallInvoice)).resolves.toBe(
-      true,
-    );
-    await expect(session.can('invoice', 'approve', largeInvoice)).resolves.toBe(
-      false,
-    );
+    expect(session.can('invoice', 'approve', smallInvoice)).toBe(true);
+    expect(session.can('invoice', 'approve', largeInvoice)).toBe(false);
   });
 
-  it('explains which scoped role granted the decision', async () => {
+  it('explains which scoped role granted the decision', () => {
     const session = authz.session({
       subject,
       scope: 'org:acme',
       roles: ['manager'],
     });
 
-    const explanation = await session.explain(
-      'project',
-      'delete',
-      foreignProject,
-    );
+    const explanation = session.explain('project', 'delete', foreignProject);
 
     expect(explanation.allowed).toBe(true);
     expect(explanation.grantedBy).toEqual({
@@ -130,7 +118,7 @@ describe('multi-tenant authorization', () => {
     });
   });
 
-  it('preserves tenant context in denied assertions', async () => {
+  it('preserves tenant context in denied assertions', () => {
     const session = authz.session({
       subject,
       scope: 'org:acme',
@@ -139,7 +127,7 @@ describe('multi-tenant authorization', () => {
 
     let caught: unknown;
     try {
-      await session.assert('invoice', 'approve', largeInvoice);
+      session.assert('invoice', 'approve', largeInvoice);
     } catch (error) {
       caught = error;
     }

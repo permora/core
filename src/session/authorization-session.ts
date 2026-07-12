@@ -60,7 +60,7 @@ export class AuthorizationSession<
     resource: string,
     action: string,
     resourceInstance: unknown,
-  ): Promise<EvaluationResult> {
+  ): EvaluationResult {
     return evaluate({
       grants: this.grants,
       subject: this.subject,
@@ -75,42 +75,38 @@ export class AuthorizationSession<
   }
 
   /**
-   * Resolves to true when any reachable grant allows the action
+   * Returns true when any reachable grant allows the action
    * (default deny).
    */
-  async can<Name extends ResourceName<Resources>>(
+  can<Name extends ResourceName<Resources>>(
     resource: Name,
     action: ActionOf<Resources, Name>,
     resourceInstance?: InstanceOf<Resources, Name>,
-  ): Promise<boolean> {
-    const result = await this.evaluateAction(
-      resource,
-      action,
-      resourceInstance,
-    );
+  ): boolean {
+    const result = this.evaluateAction(resource, action, resourceInstance);
     return result.allowed;
   }
 
   /**
    * Semantic negation of `can()`.
    */
-  async cannot<Name extends ResourceName<Resources>>(
+  cannot<Name extends ResourceName<Resources>>(
     resource: Name,
     action: ActionOf<Resources, Name>,
     resourceInstance?: InstanceOf<Resources, Name>,
-  ): Promise<boolean> {
-    return !(await this.can(resource, action, resourceInstance));
+  ): boolean {
+    return !this.can(resource, action, resourceInstance);
   }
 
   /**
-   * Resolves when allowed; throws `AuthorizationDeniedError` when denied.
+   * Throws `AuthorizationDeniedError` when denied.
    */
-  async assert<Name extends ResourceName<Resources>>(
+  assert<Name extends ResourceName<Resources>>(
     resource: Name,
     action: ActionOf<Resources, Name>,
     resourceInstance?: InstanceOf<Resources, Name>,
-  ): Promise<void> {
-    if (await this.can(resource, action, resourceInstance)) {
+  ): void {
+    if (this.can(resource, action, resourceInstance)) {
       return;
     }
 
@@ -126,16 +122,12 @@ export class AuthorizationSession<
   /**
    * Explains the decision using the same evaluator as `can()`.
    */
-  async explain<Name extends ResourceName<Resources>>(
+  explain<Name extends ResourceName<Resources>>(
     resource: Name,
     action: ActionOf<Resources, Name>,
     resourceInstance?: InstanceOf<Resources, Name>,
-  ): Promise<AuthorizationExplanation> {
-    const result = await this.evaluateAction(
-      resource,
-      action,
-      resourceInstance,
-    );
+  ): AuthorizationExplanation {
+    const result = this.evaluateAction(resource, action, resourceInstance);
 
     return {
       allowed: result.allowed,
@@ -166,21 +158,17 @@ export class AuthorizationSession<
    * interpreting wildcards through the action list declared in
    * `defineResources()`. Conditions are evaluated when present.
    */
-  async allowedActions<Name extends ResourceName<Resources>>(
+  allowedActions<Name extends ResourceName<Resources>>(
     resource: Name,
     resourceInstance?: InstanceOf<Resources, Name>,
-  ): Promise<ActionOf<Resources, Name>[]> {
+  ): ActionOf<Resources, Name>[] {
     const declaredActions = this.resources[resource]
       .actions as readonly ActionOf<Resources, Name>[];
 
     const allowed: ActionOf<Resources, Name>[] = [];
 
     for (const action of declaredActions) {
-      const result = await this.evaluateAction(
-        resource,
-        action,
-        resourceInstance,
-      );
+      const result = this.evaluateAction(resource, action, resourceInstance);
       if (result.allowed) {
         allowed.push(action);
       }

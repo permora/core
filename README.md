@@ -20,7 +20,7 @@ Scope → Role → Inheritance → Resource → Permission → Condition → Dec
 - **Single-tenant by default**: define roles directly — no scope wrapper required
 - **Scopes (multi-tenant)**: opt-in via `@permora/core/scoped` — tenant namespaces (`*`, `org:acme`, `project:123`) with per-role fallback
 - **Role inheritance**: transitive `extends` with cycle detection, resolved per scope
-- **Conditions**: sync or async `when` predicates receiving `{ subject, scope, resource, context }`; named `condition` ids on resources for portable sessions
+- **Conditions**: sync `when` predicates receiving `{ subject, scope, resource, context }`; named `condition` ids on resources for portable sessions
 - **Wildcard actions**: `["*"]` grants every declared action of a resource
 - **Explainability**: `session.explain()` reports which grant or condition decided
 - **Partial compilation**: sessions only compile the roles they can reach — O(reachable roles + permissions)
@@ -158,11 +158,11 @@ const session = authz.session({
   roles: ['editor'],
 });
 
-await session.can('project', 'read'); // true (editor → viewer)
-await session.can('project', 'delete', project); // true when owner
-await session.assert('invoice', 'approve', invoice); // throws AuthorizationDeniedError
-await session.explain('project', 'delete', project); // { allowed, grantedBy, reason, ... }
-await session.allowedActions('project', project); // ['read', 'update', 'delete']
+session.can('project', 'read'); // true (editor → viewer)
+session.can('project', 'delete', project); // true when owner
+session.assert('invoice', 'approve', invoice); // throws AuthorizationDeniedError
+session.explain('project', 'delete', project); // { allowed, grantedBy, reason, ... }
+session.allowedActions('project', project); // ['read', 'update', 'delete']
 ```
 
 Single-tenant applications omit `scope` — sessions default to the implicit `*` scope.
@@ -192,8 +192,8 @@ const resources = defineResources({
 });
 
 // ResourceName<typeof resources> === 'project' | 'invoice'
-await session.can(ResourceNames.Project, 'read');
-await session.can(ResourceNames.Invoice, 'approve', invoice);
+session.can(ResourceNames.Project, 'read');
+session.can(ResourceNames.Invoice, 'approve', invoice);
 ```
 
 **Alternative — string enum:**
@@ -256,8 +256,8 @@ const session = authz.session({
   roles: ['manager'],
 });
 
-await session.can('project', 'read'); // true (manager → editor → viewer)
-await session.can('project', 'delete', project); // true (org:acme editor override)
+session.can('project', 'read'); // true (manager → editor → viewer)
+session.can('project', 'delete', project); // true (org:acme editor override)
 ```
 
 Nested scope trees are supported via `scopedPermissions({ nested: true })`. Use `separator` to customize how segments are joined (only applies when `nested: true`):
@@ -345,7 +345,7 @@ const authz = createAuthorization({
 | `onGranted`         | When the evaluation result is allowed                                        |
 | `onDenied`          | When the evaluation result is denied                                         |
 
-Plugins are optional; omitting `plugins` has zero overhead. Errors thrown by plugins propagate to the caller during evaluation. `onSessionCreate` runs synchronously during `authz.session()`; async handlers are scheduled without blocking session creation.
+Plugins are optional; omitting `plugins` has zero overhead. Errors thrown by plugins propagate to the caller during evaluation. All plugin hooks run synchronously.
 
 ### Portable sessions
 
@@ -397,15 +397,15 @@ See [examples/09-portable-sessions.md](./examples/09-portable-sessions.md).
 
 ### Session API
 
-| Method                                 | Returns                             | Description                                                                     |
-| -------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------- |
-| `can(resource, action, instance?)`     | `Promise<boolean>`                  | True when any grant allows the action                                           |
-| `cannot(resource, action, instance?)`  | `Promise<boolean>`                  | Negation of `can`                                                               |
-| `assert(resource, action, instance?)`  | `Promise<void>`                     | Throws `AuthorizationDeniedError` when denied                                   |
-| `explain(resource, action, instance?)` | `Promise<AuthorizationExplanation>` | Decision plus the grants evaluated to reach it                                  |
-| `allowedActions(resource, instance?)`  | `Promise<Action[]>`                 | Declared actions allowed for this session                                       |
-| `permissionGraph()`                    | `SessionPermissionGraph`            | Reachable role graph and normalized permissions (sync; no condition evaluation) |
-| `toPortable()`                         | `PortableSession`                   | JSON-friendly snapshot for transport (requires named `condition` ids)           |
+| Method                                 | Returns                    | Description                                                                     |
+| -------------------------------------- | -------------------------- | ------------------------------------------------------------------------------- |
+| `can(resource, action, instance?)`     | `boolean`                  | True when any grant allows the action                                           |
+| `cannot(resource, action, instance?)`  | `boolean`                  | Negation of `can`                                                               |
+| `assert(resource, action, instance?)`  | `void`                     | Throws `AuthorizationDeniedError` when denied                                   |
+| `explain(resource, action, instance?)` | `AuthorizationExplanation` | Decision plus the grants evaluated to reach it                                  |
+| `allowedActions(resource, instance?)`  | `Action[]`                 | Declared actions allowed for this session                                       |
+| `permissionGraph()`                    | `SessionPermissionGraph`   | Reachable role graph and normalized permissions (sync; no condition evaluation) |
+| `toPortable()`                         | `PortableSession`          | JSON-friendly snapshot for transport (requires named `condition` ids)           |
 
 ### Errors
 

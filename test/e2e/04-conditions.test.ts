@@ -19,8 +19,8 @@ describe('e2e / 04 conditions', () => {
     roles: ['editor'],
   });
 
-  it('evaluates conditional grants with resource instances', async () => {
-    await expectCanMatrix(session, [
+  it('evaluates conditional grants with resource instances', () => {
+    expectCanMatrix(session, [
       { resource: 'post', action: 'read', expected: true },
       {
         resource: 'post',
@@ -37,8 +37,8 @@ describe('e2e / 04 conditions', () => {
     ]);
   });
 
-  it('explains denial when condition fails', async () => {
-    const explanation = await session.explain('post', 'delete', otherPost);
+  it('explains denial when condition fails', () => {
+    const explanation = session.explain('post', 'delete', otherPost);
 
     expect(explanation).toMatchObject({
       allowed: false,
@@ -56,19 +56,15 @@ describe('e2e / 04 conditions', () => {
     });
   });
 
-  it('evaluates scoped tenant conditions', async () => {
+  it('evaluates scoped tenant conditions', () => {
     const acme = tenantAuthz.session({
       subject: conditionSubject,
       scope: 'org:acme',
       roles: ['manager'],
     });
 
-    await expect(acme.can('invoice', 'approve', smallInvoice)).resolves.toBe(
-      true,
-    );
-    await expect(acme.can('invoice', 'approve', largeInvoice)).resolves.toBe(
-      false,
-    );
+    expect(acme.can('invoice', 'approve', smallInvoice)).toBe(true);
+    expect(acme.can('invoice', 'approve', largeInvoice)).toBe(false);
   });
 
   it('marks conditional permissions without executing when in permissionGraph', () => {

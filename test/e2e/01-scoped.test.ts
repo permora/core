@@ -27,35 +27,31 @@ describe('e2e / 01 scoped', () => {
     roles: ['manager'],
   });
 
-  it('falls back to *.viewer for manager in org:acme', async () => {
-    await expectCanMatrix(acmeManager, [
+  it('falls back to *.viewer for manager in org:acme', () => {
+    expectCanMatrix(acmeManager, [
       { resource: 'project', action: 'read', expected: true },
       { resource: 'invoice', action: 'read', expected: true },
     ]);
   });
 
-  it('applies owner-only delete in default scope', async () => {
-    await expect(
-      defaultEditor.can('project', 'delete', foreignProject),
-    ).resolves.toBe(false);
+  it('applies owner-only delete in default scope', () => {
+    expect(defaultEditor.can('project', 'delete', foreignProject)).toBe(false);
   });
 
-  it('replaces *.editor entirely in org:acme (unconditional delete)', async () => {
-    await expect(
-      acmeEditor.can('project', 'delete', foreignProject),
-    ).resolves.toBe(true);
+  it('replaces *.editor entirely in org:acme (unconditional delete)', () => {
+    expect(acmeEditor.can('project', 'delete', foreignProject)).toBe(true);
   });
 
-  it('denies conditional invoice approve above limit', async () => {
+  it('denies conditional invoice approve above limit', () => {
     const session = scopedSaasAuthz.session({
       subject: saasSubject,
       scope: 'org:acme',
       roles: ['manager'],
     });
 
-    await expect(session.can('project', 'read')).resolves.toBe(true);
-    await expect(
+    expect(session.can('project', 'read')).toBe(true);
+    expect(
       session.can('invoice', 'approve', { id: 'i2', amount: 50_000 }),
-    ).resolves.toBe(false);
+    ).toBe(false);
   });
 });

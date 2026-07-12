@@ -74,8 +74,8 @@ const session = authz.session({
   roles: ['viewer'],
 });
 
-await session.can('project', 'read'); // triggers grant hooks
-await session.can('project', 'update'); // triggers deny hooks
+session.can('project', 'read'); // triggers grant hooks
+session.can('project', 'update'); // triggers deny hooks
 ```
 
 ## Expected behavior
@@ -131,7 +131,7 @@ If a hook throws, the error reaches the caller of `can()` / `explain()` / `allow
 
 - Plugins are observational only — they cannot change decisions
 - Omit `plugins` entirely when audit is not needed
-- Async plugin handlers are scheduled without blocking session creation (`onSessionCreate`)
+- All plugin hooks run synchronously
 
 ## Previous
 

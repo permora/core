@@ -86,7 +86,7 @@ const restored = createSessionFromPortable(portable, {
   context: {}, // per-request; not stored in the portable payload
 });
 
-await restored.can('invoice', 'approve', { id: 'i1', amount: 5_000 }); // allow
+restored.can('invoice', 'approve', { id: 'i1', amount: 5_000 }); // allow
 ```
 
 `createSessionFromPortable` validates every grant against the **current** `resources` registry:

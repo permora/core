@@ -20,22 +20,22 @@ describe('e2e / 02 fallbacks and merge', () => {
       roles: ['admin'],
     });
 
-    it('allows tenant-specific invoice:approve', async () => {
-      await expect(session.can('invoice', 'approve')).resolves.toBe(true);
+    it('allows tenant-specific invoice:approve', () => {
+      expect(session.can('invoice', 'approve')).toBe(true);
     });
 
-    it('denies project:update because org:acme.admin replaces *.admin', async () => {
-      await expect(session.can('project', 'update')).resolves.toBe(false);
+    it('denies project:update because org:acme.admin replaces *.admin', () => {
+      expect(session.can('project', 'update')).toBe(false);
     });
 
-    it('falls back viewer to *.viewer', async () => {
+    it('falls back viewer to *.viewer', () => {
       const viewer = defaultMergeAuthz.session({
         subject: mergeSubject,
         scope: 'org:acme',
         roles: ['viewer'],
       });
 
-      await expect(viewer.can('project', 'read')).resolves.toBe(true);
+      expect(viewer.can('project', 'read')).toBe(true);
     });
   });
 
@@ -46,8 +46,8 @@ describe('e2e / 02 fallbacks and merge', () => {
       roles: ['admin'],
     });
 
-    it('merges *.admin with org:acme.admin', async () => {
-      await expectCanMatrix(session, [
+    it('merges *.admin with org:acme.admin', () => {
+      expectCanMatrix(session, [
         { resource: 'project', action: 'read', expected: true },
         { resource: 'project', action: 'update', expected: true },
         { resource: 'invoice', action: 'approve', expected: true },
@@ -66,14 +66,14 @@ describe('e2e / 02 fallbacks and merge', () => {
       ).toThrow(UnknownRoleError);
     });
 
-    it('allows admin defined in org:acme', async () => {
+    it('allows admin defined in org:acme', () => {
       const session = strictAuthz.session({
         subject: mergeSubject,
         scope: 'org:acme',
         roles: ['admin'],
       });
 
-      await expect(session.can('invoice', 'approve')).resolves.toBe(true);
+      expect(session.can('invoice', 'approve')).toBe(true);
     });
   });
 
@@ -84,8 +84,8 @@ describe('e2e / 02 fallbacks and merge', () => {
       roles: ['admin'],
     });
 
-    it('merges admin permissions from both scopes', async () => {
-      await expectCanMatrix(session, [
+    it('merges admin permissions from both scopes', () => {
+      expectCanMatrix(session, [
         { resource: 'project', action: 'update', expected: true },
         { resource: 'invoice', action: 'read', expected: true },
         { resource: 'invoice', action: 'approve', expected: true },

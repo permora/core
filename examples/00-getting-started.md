@@ -61,8 +61,8 @@ const editorSession = authz.session({ subject, roles: ['editor'] });
 Additional expectations:
 
 - `viewerSession.scope` is `'*'` (implicit default scope)
-- `await editorSession.can('post', 'read')` is `true` via inheritance (`editor` → `viewer`)
-- `await viewerSession.assert('post', 'update')` **throws** `AuthorizationDeniedError`
+- `editorSession.can('post', 'read')` is `true` via inheritance (`editor` → `viewer`)
+- `viewerSession.assert('post', 'update')` **throws** `AuthorizationDeniedError`
 
 ## Common mistakes
 

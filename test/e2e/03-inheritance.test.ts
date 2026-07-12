@@ -24,8 +24,8 @@ describe('e2e / 03 inheritance', () => {
     roles: ['manager'],
   });
 
-  it('resolves transitive grants in DFS order', async () => {
-    await expectCanMatrix(session, [
+  it('resolves transitive grants in DFS order', () => {
+    expectCanMatrix(session, [
       { resource: 'project', action: 'read', expected: true },
       { resource: 'project', action: 'update', expected: true },
       { resource: 'project', action: 'delete', expected: true },
@@ -75,14 +75,14 @@ describe('e2e / 03 inheritance', () => {
     ).toThrow(UnknownRoleError);
   });
 
-  it('does not inherit extends from * when scoped role replaces entirely', async () => {
+  it('does not inherit extends from * when scoped role replaces entirely', () => {
     const scoped = scopedOverrideAuthz.session({
       subject: inheritanceSubject,
       scope: 'org:acme',
       roles: ['editor'],
     });
 
-    await expectCanMatrix(scoped, [
+    expectCanMatrix(scoped, [
       { resource: 'project', action: 'read', expected: true },
       { resource: 'project', action: 'update', expected: false },
     ]);

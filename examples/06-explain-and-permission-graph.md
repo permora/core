@@ -105,10 +105,10 @@ const tree = session.permissionGraph();
 }
 ```
 
-## `explain()` — per-action decision (async)
+## `explain()` — per-action decision
 
 ```typescript
-const explanation = await session.explain('project', 'delete', foreignProject);
+const explanation = session.explain('project', 'delete', foreignProject);
 ```
 
 ```json
@@ -126,19 +126,19 @@ const explanation = await session.explain('project', 'delete', foreignProject);
 Conditional grant that fails:
 
 ```typescript
-await session.explain('invoice', 'approve', largeInvoice);
+session.explain('invoice', 'approve', largeInvoice);
 // allowed: false, reason: "ALL_CONDITIONS_FAILED"
 ```
 
-## `allowedActions()` — allowed declared actions (async)
+## `allowedActions()` — allowed declared actions
 
 Evaluates every action declared on the resource:
 
 ```typescript
-await session.allowedActions('project', foreignProject);
+session.allowedActions('project', foreignProject);
 // → ['read', 'update', 'delete']
 
-await session.allowedActions('invoice', largeInvoice);
+session.allowedActions('invoice', largeInvoice);
 // → ['read']  (approve denied by when)
 ```
 

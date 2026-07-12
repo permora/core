@@ -9,9 +9,7 @@ const session = createAcceptanceSession();
 
 describe('session type safety', () => {
   it('accepts valid resource/action pairs', () => {
-    expectTypeOf(
-      session.can('project', 'read'),
-    ).resolves.toEqualTypeOf<boolean>();
+    expectTypeOf(session.can('project', 'read')).toEqualTypeOf<boolean>();
   });
 
   it('rejects actions from other resources', () => {
@@ -32,7 +30,7 @@ describe('session type safety', () => {
   });
 
   it('types allowedActions return per resource', () => {
-    expectTypeOf(session.allowedActions('project')).resolves.toEqualTypeOf<
+    expectTypeOf(session.allowedActions('project')).toEqualTypeOf<
       ('read' | 'update' | 'delete')[]
     >();
   });

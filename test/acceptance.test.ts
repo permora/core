@@ -14,23 +14,21 @@ describe('acceptance', () => {
   const project = acceptanceProject;
   const invoice = acceptanceInvoice;
 
-  it('allows project read through transitive inheritance and scope fallback', async () => {
+  it('allows project read through transitive inheritance and scope fallback', () => {
     // manager → org:acme.editor → *.viewer
-    await expect(session.can('project', 'read')).resolves.toBe(true);
+    expect(session.can('project', 'read')).toBe(true);
   });
 
-  it('allows project delete through the org:acme editor override', async () => {
-    await expect(session.can('project', 'delete', project)).resolves.toBe(true);
+  it('allows project delete through the org:acme editor override', () => {
+    expect(session.can('project', 'delete', project)).toBe(true);
   });
 
-  it('asserts invoice approval within the approval limit', async () => {
-    await expect(
-      session.assert('invoice', 'approve', invoice),
-    ).resolves.toBeUndefined();
+  it('asserts invoice approval within the approval limit', () => {
+    expect(session.assert('invoice', 'approve', invoice)).toBeUndefined();
   });
 
-  it('explains the project delete decision', async () => {
-    const explanation = await session.explain('project', 'delete', project);
+  it('explains the project delete decision', () => {
+    const explanation = session.explain('project', 'delete', project);
 
     expect(explanation.allowed).toBe(true);
     expect(explanation.grantedBy).toEqual({
@@ -40,19 +38,17 @@ describe('acceptance', () => {
     });
   });
 
-  it('lists allowed project actions', async () => {
-    await expect(session.allowedActions('project', project)).resolves.toEqual([
+  it('lists allowed project actions', () => {
+    expect(session.allowedActions('project', project)).toEqual([
       'read',
       'update',
       'delete',
     ]);
   });
 
-  it('denies invoice approval above the approval limit (default deny via conditions)', async () => {
+  it('denies invoice approval above the approval limit (default deny via conditions)', () => {
     const expensive: Invoice = { id: 'i2', amount: 50_000 };
 
-    await expect(session.can('invoice', 'approve', expensive)).resolves.toBe(
-      false,
-    );
+    expect(session.can('invoice', 'approve', expensive)).toBe(false);
   });
 });

@@ -19,7 +19,7 @@ describe('e2e / 08 plugins', () => {
     });
   });
 
-  it('fires grant hooks in order when allowed', async () => {
+  it('fires grant hooks in order when allowed', () => {
     const events: string[] = [];
     const authz = createPluginAuthz({
       onEvaluationStart: () => {
@@ -40,12 +40,12 @@ describe('e2e / 08 plugins', () => {
       subject: pluginSubject,
       roles: ['viewer'],
     });
-    await session.can('post', 'read');
+    session.can('post', 'read');
 
     expect(events).toEqual(['start', 'grant', 'end', 'granted']);
   });
 
-  it('fires deny hooks when no grant matches', async () => {
+  it('fires deny hooks when no grant matches', () => {
     const events: string[] = [];
     const authz = createPluginAuthz({
       onEvaluationStart: () => {
@@ -63,12 +63,12 @@ describe('e2e / 08 plugins', () => {
       subject: pluginSubject,
       roles: ['viewer'],
     });
-    await session.can('post', 'update');
+    session.can('post', 'update');
 
     expect(events).toEqual(['start', 'end', 'denied']);
   });
 
-  it('reports conditional grant evaluation on deny path', async () => {
+  it('reports conditional grant evaluation on deny path', () => {
     const onGrantEvaluation = vi.fn();
     const authz = createPluginAuthz({ onGrantEvaluation });
 
@@ -76,7 +76,7 @@ describe('e2e / 08 plugins', () => {
       subject: pluginSubject,
       roles: ['editor'],
     });
-    await session.can('post', 'delete', {
+    session.can('post', 'delete', {
       id: 'p1',
       authorId: 'other',
       published: false,
@@ -90,7 +90,7 @@ describe('e2e / 08 plugins', () => {
     );
   });
 
-  it('fires evaluation hooks once per action in allowedActions', async () => {
+  it('fires evaluation hooks once per action in allowedActions', () => {
     const onEvaluationStart = vi.fn();
     const authz = createPluginAuthz({ onEvaluationStart });
 
@@ -98,7 +98,7 @@ describe('e2e / 08 plugins', () => {
       subject: pluginSubject,
       roles: ['editor'],
     });
-    await session.allowedActions('post', {
+    session.allowedActions('post', {
       id: 'p1',
       authorId: 'u1',
       published: false,

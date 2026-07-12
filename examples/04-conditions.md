@@ -2,7 +2,7 @@
 
 ## Scenario
 
-Attach sync or async predicates to permissions. Conditions run at evaluation time (`can`, `explain`, `allowedActions`) — not during session compilation.
+Attach sync predicates to permissions. Conditions run at evaluation time (`can`, `explain`, `allowedActions`) — not during session compilation.
 
 ## Configuration
 
@@ -98,7 +98,7 @@ Unconditional grants do not require a resource instance. Conditional grants need
 ### `explain` on denial
 
 ```typescript
-const explanation = await session.explain('post', 'delete', otherPost);
+const explanation = session.explain('post', 'delete', otherPost);
 ```
 
 ```json
@@ -127,8 +127,8 @@ const acme = tenantAuthz.session({
   roles: ['manager'],
 });
 
-await acme.can('invoice', 'approve', smallInvoice); // allow
-await acme.can('invoice', 'approve', largeInvoice); // deny
+acme.can('invoice', 'approve', smallInvoice); // allow
+acme.can('invoice', 'approve', largeInvoice); // deny
 ```
 
 ### `permissionGraph` vs conditions

@@ -56,7 +56,7 @@ describe('strongly typed resource names', () => {
     >();
   });
 
-  it('accepts ResourceNames constants in session.can', async () => {
+  it('accepts ResourceNames constants in session.can', () => {
     const permissions = definePermissions({
       resources: resourcesFromConstNames,
     })
@@ -73,8 +73,8 @@ describe('strongly typed resource names', () => {
       roles: ['viewer'],
     });
 
-    await session.can(ResourceNames.Project, 'read');
-    await session.can(ResourceNames.Invoice, 'read');
+    session.can(ResourceNames.Project, 'read');
+    session.can(ResourceNames.Invoice, 'read');
   });
 });
 

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-12
+
+### Changed
+
+- **Breaking:** `when` conditions and resource `conditions` registry predicates are sync-only (`boolean`); `Promise<boolean>` is no longer supported
+- **Breaking:** observer plugin hooks are sync-only (`void`); `Promise<void>` is no longer supported
+- **Breaking:** `evaluate()` returns `EvaluationResult` synchronously (was `Promise<EvaluationResult>`)
+- **Breaking:** `AuthorizationSession` evaluation methods are synchronous: `can`, `cannot`, `assert`, `explain`, and `allowedActions` no longer return Promises
+
 ## [0.2.0] - 2026-07-10
 
 ### Added

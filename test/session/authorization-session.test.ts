@@ -63,59 +63,51 @@ const ownProject: Project = { id: 'p1', ownerId: 'user_123' };
 const otherProject: Project = { id: 'p2', ownerId: 'someone_else' };
 
 describe('can', () => {
-  it('allows unconditional grants without a resource instance', async () => {
+  it('allows unconditional grants without a resource instance', () => {
     const session = authz.session({ subject: user, roles: ['viewer'] });
 
-    await expect(session.can('project', 'read')).resolves.toBe(true);
+    expect(session.can('project', 'read')).toBe(true);
   });
 
-  it('denies actions without grants (default deny)', async () => {
+  it('denies actions without grants (default deny)', () => {
     const session = authz.session({ subject: user, roles: ['viewer'] });
 
-    await expect(session.can('project', 'update')).resolves.toBe(false);
+    expect(session.can('project', 'update')).toBe(false);
   });
 
-  it('evaluates conditions with the resource instance', async () => {
+  it('evaluates conditions with the resource instance', () => {
     const session = authz.session({ subject: user, roles: ['editor'] });
 
-    await expect(session.can('project', 'delete', ownProject)).resolves.toBe(
-      true,
-    );
-    await expect(session.can('project', 'delete', otherProject)).resolves.toBe(
-      false,
-    );
+    expect(session.can('project', 'delete', ownProject)).toBe(true);
+    expect(session.can('project', 'delete', otherProject)).toBe(false);
   });
 
-  it('allows via wildcard grants', async () => {
+  it('allows via wildcard grants', () => {
     const session = authz.session({ subject: user, roles: ['admin'] });
 
-    await expect(session.can('project', 'delete', otherProject)).resolves.toBe(
-      true,
-    );
+    expect(session.can('project', 'delete', otherProject)).toBe(true);
   });
 
-  it('combines grants from multiple roles', async () => {
+  it('combines grants from multiple roles', () => {
     const session = authz.session({
       subject: user,
       roles: ['viewer', 'admin'],
     });
 
-    await expect(session.can('project', 'update')).resolves.toBe(true);
+    expect(session.can('project', 'update')).toBe(true);
   });
 
-  it('applies scope overrides: org:acme editor deletes unconditionally', async () => {
+  it('applies scope overrides: org:acme editor deletes unconditionally', () => {
     const session = authz.session({
       subject: user,
       scope: 'org:acme',
       roles: ['editor'],
     });
 
-    await expect(session.can('project', 'delete', otherProject)).resolves.toBe(
-      true,
-    );
+    expect(session.can('project', 'delete', otherProject)).toBe(true);
   });
 
-  it('resolves inherited roles across scopes', async () => {
+  it('resolves inherited roles across scopes', () => {
     const session = authz.session({
       subject: user,
       scope: 'org:acme',
@@ -123,11 +115,11 @@ describe('can', () => {
     });
 
     // manager → org:acme.editor → *.viewer
-    await expect(session.can('project', 'read')).resolves.toBe(true);
-    await expect(session.can('invoice', 'read')).resolves.toBe(true);
+    expect(session.can('project', 'read')).toBe(true);
+    expect(session.can('invoice', 'read')).toBe(true);
   });
 
-  it('treats sessions without scope as scope "*"', async () => {
+  it('treats sessions without scope as scope "*"', () => {
     const implicit = authz.session({ subject: user, roles: ['editor'] });
     const explicit = authz.session({
       subject: user,
@@ -135,30 +127,30 @@ describe('can', () => {
       roles: ['editor'],
     });
 
-    await expect(implicit.can('project', 'update')).resolves.toBe(true);
-    await expect(explicit.can('project', 'update')).resolves.toBe(true);
+    expect(implicit.can('project', 'update')).toBe(true);
+    expect(explicit.can('project', 'update')).toBe(true);
     expect(implicit.scope).toBe('*');
     expect(explicit.scope).toBe('*');
   });
 });
 
 describe('cannot', () => {
-  it('is the negation of can', async () => {
+  it('is the negation of can', () => {
     const session = authz.session({ subject: user, roles: ['viewer'] });
 
-    await expect(session.cannot('project', 'read')).resolves.toBe(false);
-    await expect(session.cannot('project', 'update')).resolves.toBe(true);
+    expect(session.cannot('project', 'read')).toBe(false);
+    expect(session.cannot('project', 'update')).toBe(true);
   });
 });
 
 describe('assert', () => {
-  it('resolves when allowed', async () => {
+  it('resolves when allowed', () => {
     const session = authz.session({ subject: user, roles: ['viewer'] });
 
-    await expect(session.assert('project', 'read')).resolves.toBeUndefined();
+    expect(session.assert('project', 'read')).toBeUndefined();
   });
 
-  it('throws AuthorizationDeniedError with decision details when denied', async () => {
+  it('throws AuthorizationDeniedError with decision details when denied', () => {
     const session = authz.session({
       subject: user,
       scope: 'org:acme',
@@ -169,7 +161,7 @@ describe('assert', () => {
 
     let caught: unknown;
     try {
-      await session.assert('invoice', 'approve', bigInvoice);
+      session.assert('invoice', 'approve', bigInvoice);
     } catch (error) {
       caught = error;
     }
@@ -186,10 +178,10 @@ describe('assert', () => {
 });
 
 describe('explain', () => {
-  it('identifies the grant responsible for the decision', async () => {
+  it('identifies the grant responsible for the decision', () => {
     const session = authz.session({ subject: user, roles: ['viewer'] });
 
-    const explanation = await session.explain('project', 'read');
+    const explanation = session.explain('project', 'read');
 
     expect(explanation.allowed).toBe(true);
     expect(explanation.reason).toBe('GRANT_MATCHED');
@@ -200,10 +192,10 @@ describe('explain', () => {
     });
   });
 
-  it('identifies the condition responsible for the decision', async () => {
+  it('identifies the condition responsible for the decision', () => {
     const session = authz.session({ subject: user, roles: ['editor'] });
 
-    const explanation = await session.explain('project', 'delete', ownProject);
+    const explanation = session.explain('project', 'delete', ownProject);
 
     expect(explanation.allowed).toBe(true);
     expect(explanation.reason).toBe('CONDITION_MATCHED');
@@ -219,10 +211,10 @@ describe('explain', () => {
     ]);
   });
 
-  it('explains denials without matching grants', async () => {
+  it('explains denials without matching grants', () => {
     const session = authz.session({ subject: user, roles: ['viewer'] });
 
-    const explanation = await session.explain('invoice', 'approve');
+    const explanation = session.explain('invoice', 'approve');
 
     expect(explanation.allowed).toBe(false);
     expect(explanation.reason).toBe('NO_MATCHING_GRANT');
@@ -230,28 +222,24 @@ describe('explain', () => {
     expect(explanation.grantedBy).toBeUndefined();
   });
 
-  it('explains denials after all conditions fail', async () => {
+  it('explains denials after all conditions fail', () => {
     const session = authz.session({ subject: user, roles: ['editor'] });
 
-    const explanation = await session.explain(
-      'project',
-      'delete',
-      otherProject,
-    );
+    const explanation = session.explain('project', 'delete', otherProject);
 
     expect(explanation.allowed).toBe(false);
     expect(explanation.reason).toBe('ALL_CONDITIONS_FAILED');
     expect(explanation.evaluatedGrants[0]?.matched).toBe(false);
   });
 
-  it('includes scope, roles, resource and action', async () => {
+  it('includes scope, roles, resource and action', () => {
     const session = authz.session({
       subject: user,
       scope: 'org:acme',
       roles: ['manager'],
     });
 
-    const explanation = await session.explain('invoice', 'read');
+    const explanation = session.explain('invoice', 'read');
 
     expect(explanation.scope).toBe('org:acme');
     expect(explanation.roles).toEqual(['manager']);
@@ -261,35 +249,38 @@ describe('explain', () => {
 });
 
 describe('allowedActions', () => {
-  it('lists unconditional permissions', async () => {
+  it('lists unconditional permissions', () => {
     const session = authz.session({ subject: user, roles: ['viewer'] });
 
-    await expect(session.allowedActions('project')).resolves.toEqual(['read']);
+    expect(session.allowedActions('project')).toEqual(['read']);
   });
 
-  it('evaluates conditions against the resource instance', async () => {
+  it('evaluates conditions against the resource instance', () => {
     const session = authz.session({ subject: user, roles: ['editor'] });
 
-    await expect(
-      session.allowedActions('project', ownProject),
-    ).resolves.toEqual(['read', 'update', 'delete']);
+    expect(session.allowedActions('project', ownProject)).toEqual([
+      'read',
+      'update',
+      'delete',
+    ]);
 
-    await expect(
-      session.allowedActions('project', otherProject),
-    ).resolves.toEqual(['read', 'update']);
+    expect(session.allowedActions('project', otherProject)).toEqual([
+      'read',
+      'update',
+    ]);
   });
 
-  it('expands wildcard using the declared action list', async () => {
+  it('expands wildcard using the declared action list', () => {
     const session = authz.session({ subject: user, roles: ['admin'] });
 
-    await expect(session.allowedActions('project')).resolves.toEqual([
+    expect(session.allowedActions('project')).toEqual([
       'read',
       'update',
       'delete',
     ]);
   });
 
-  it('includes inherited permissions from multiple roles', async () => {
+  it('includes inherited permissions from multiple roles', () => {
     const session = authz.session({
       subject: user,
       scope: 'org:acme',
@@ -298,9 +289,10 @@ describe('allowedActions', () => {
 
     const smallInvoice: Invoice = { id: 'i1', amount: 500 };
 
-    await expect(
-      session.allowedActions('invoice', smallInvoice),
-    ).resolves.toEqual(['read', 'approve']);
+    expect(session.allowedActions('invoice', smallInvoice)).toEqual([
+      'read',
+      'approve',
+    ]);
   });
 });
 

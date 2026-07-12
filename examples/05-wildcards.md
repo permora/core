@@ -51,7 +51,7 @@ const viewerSession = authz.session({ subject, roles: ['viewer'] });
 | `roles: ['admin']`  | allow          | allow            | allow            |
 
 ```typescript
-await adminSession.can('project', 'delete', foreignProject); // allow
+adminSession.can('project', 'delete', foreignProject); // allow
 ```
 
 ### Compilation does not expand `*`
@@ -65,7 +65,7 @@ adminSession.permissionGraph();
 ### `allowedActions` expands against declared actions
 
 ```typescript
-await adminSession.allowedActions('project');
+adminSession.allowedActions('project');
 // → ['read', 'update', 'delete']
 ```
 
@@ -75,7 +75,7 @@ Each declared action is evaluated individually (including any `when` on wildcard
 
 ```typescript
 authz.session({ subject, roles: ['viewer', 'admin'] });
-await session.can('project', 'update'); // allow (from admin wildcard)
+session.can('project', 'update'); // allow (from admin wildcard)
 ```
 
 ## Common mistakes

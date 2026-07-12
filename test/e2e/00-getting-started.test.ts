@@ -21,8 +21,8 @@ describe('00 getting-started', () => {
     expect(viewerSession.scope).toBe('*');
   });
 
-  it('matches viewer permission matrix', async () => {
-    await expectCanMatrix(viewerSession, [
+  it('matches viewer permission matrix', () => {
+    expectCanMatrix(viewerSession, [
       { resource: 'post', action: 'read', expected: true },
       { resource: 'post', action: 'create', expected: false },
       { resource: 'post', action: 'update', expected: false },
@@ -30,8 +30,8 @@ describe('00 getting-started', () => {
     ]);
   });
 
-  it('matches editor permission matrix via inheritance', async () => {
-    await expectCanMatrix(editorSession, [
+  it('matches editor permission matrix via inheritance', () => {
+    expectCanMatrix(editorSession, [
       { resource: 'post', action: 'read', expected: true },
       { resource: 'post', action: 'create', expected: true },
       { resource: 'post', action: 'update', expected: true },
@@ -39,8 +39,8 @@ describe('00 getting-started', () => {
     ]);
   });
 
-  it('throws AuthorizationDeniedError on assert when denied', async () => {
-    await expect(viewerSession.assert('post', 'update')).rejects.toBeInstanceOf(
+  it('throws AuthorizationDeniedError on assert when denied', () => {
+    expect(() => viewerSession.assert('post', 'update')).toThrow(
       AuthorizationDeniedError,
     );
   });

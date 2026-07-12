@@ -49,36 +49,34 @@ describe('single-tenant authorization', () => {
   const ownDraft: Post = { id: 'p1', authorId: 'u2', published: false };
   const otherDraft: Post = { id: 'p2', authorId: 'u1', published: false };
 
-  it('uses the implicit default scope for sessions without scope', async () => {
+  it('uses the implicit default scope for sessions without scope', () => {
     const session = authz.session({
       subject,
       roles: ['editor'],
     });
 
     expect(session.scope).toBe('*');
-    await expect(session.can('post', 'read')).resolves.toBe(true);
-    await expect(session.can('post', 'create')).resolves.toBe(true);
+    expect(session.can('post', 'read')).toBe(true);
+    expect(session.can('post', 'create')).toBe(true);
   });
 
-  it('enforces ownership conditions for destructive actions', async () => {
+  it('enforces ownership conditions for destructive actions', () => {
     const session = authz.session({
       subject,
       roles: ['editor'],
     });
 
-    await expect(session.can('post', 'delete', ownDraft)).resolves.toBe(true);
-    await expect(session.can('post', 'delete', otherDraft)).resolves.toBe(
-      false,
-    );
+    expect(session.can('post', 'delete', ownDraft)).toBe(true);
+    expect(session.can('post', 'delete', otherDraft)).toBe(false);
   });
 
-  it('returns a useful denial explanation when the condition fails', async () => {
+  it('returns a useful denial explanation when the condition fails', () => {
     const session = authz.session({
       subject,
       roles: ['editor'],
     });
 
-    const explanation = await session.explain('post', 'delete', otherDraft);
+    const explanation = session.explain('post', 'delete', otherDraft);
 
     expect(explanation.allowed).toBe(false);
     expect(explanation.reason).toBe('ALL_CONDITIONS_FAILED');
@@ -94,13 +92,13 @@ describe('single-tenant authorization', () => {
     ]);
   });
 
-  it('lets admins perform any declared action', async () => {
+  it('lets admins perform any declared action', () => {
     const session = authz.session({
       subject,
       roles: ['admin'],
     });
 
-    await expect(session.allowedActions('post', otherDraft)).resolves.toEqual([
+    expect(session.allowedActions('post', otherDraft)).toEqual([
       'read',
       'create',
       'update',
@@ -109,7 +107,7 @@ describe('single-tenant authorization', () => {
     ]);
   });
 
-  it('throws AuthorizationDeniedError on denied assertions', async () => {
+  it('throws AuthorizationDeniedError on denied assertions', () => {
     const session = authz.session({
       subject,
       roles: ['editor'],
@@ -117,7 +115,7 @@ describe('single-tenant authorization', () => {
 
     let caught: unknown;
     try {
-      await session.assert('post', 'delete', otherDraft);
+      session.assert('post', 'delete', otherDraft);
     } catch (error) {
       caught = error;
     }

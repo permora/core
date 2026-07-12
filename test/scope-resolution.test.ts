@@ -37,25 +37,25 @@ describe('scopeResolution via createAuthorization', () => {
   describe('default (fallback: true, merge: false)', () => {
     const authz = createAuthorization({ resources, permissions });
 
-    it('falls back to *.viewer when missing in scope', async () => {
+    it('falls back to *.viewer when missing in scope', () => {
       const session = authz.session({
         subject: { id: 'u1' },
         scope: 'org:acme',
         roles: ['viewer'],
       });
 
-      await expect(session.can('project', 'read')).resolves.toBe(true);
+      expect(session.can('project', 'read')).toBe(true);
     });
 
-    it('replaces *.admin entirely with org:acme.admin', async () => {
+    it('replaces *.admin entirely with org:acme.admin', () => {
       const session = authz.session({
         subject: { id: 'u1' },
         scope: 'org:acme',
         roles: ['admin'],
       });
 
-      await expect(session.can('invoice', 'approve')).resolves.toBe(true);
-      await expect(session.can('project', 'update')).resolves.toBe(false);
+      expect(session.can('invoice', 'approve')).toBe(true);
+      expect(session.can('project', 'update')).toBe(false);
     });
   });
 
@@ -66,16 +66,16 @@ describe('scopeResolution via createAuthorization', () => {
       scopeResolution: { merge: true },
     });
 
-    it('combines *.admin with org:acme.admin', async () => {
+    it('combines *.admin with org:acme.admin', () => {
       const session = authz.session({
         subject: { id: 'u1' },
         scope: 'org:acme',
         roles: ['admin'],
       });
 
-      await expect(session.can('project', 'read')).resolves.toBe(true);
-      await expect(session.can('project', 'update')).resolves.toBe(true);
-      await expect(session.can('invoice', 'approve')).resolves.toBe(true);
+      expect(session.can('project', 'read')).toBe(true);
+      expect(session.can('project', 'update')).toBe(true);
+      expect(session.can('invoice', 'approve')).toBe(true);
     });
   });
 
@@ -96,14 +96,14 @@ describe('scopeResolution via createAuthorization', () => {
       ).toThrow(UnknownRoleError);
     });
 
-    it('resolves roles defined in the session scope', async () => {
+    it('resolves roles defined in the session scope', () => {
       const session = authz.session({
         subject: { id: 'u1' },
         scope: 'org:acme',
         roles: ['admin'],
       });
 
-      await expect(session.can('invoice', 'approve')).resolves.toBe(true);
+      expect(session.can('invoice', 'approve')).toBe(true);
     });
 
     it('omits fallback hint from UnknownRoleError message', () => {
@@ -149,16 +149,16 @@ describe('scopeResolution via createAuthorization', () => {
       ).toThrow(UnknownRoleError);
     });
 
-    it('merges when both *.admin and org:acme.admin exist', async () => {
+    it('merges when both *.admin and org:acme.admin exist', () => {
       const session = authz.session({
         subject: { id: 'u1' },
         scope: 'org:acme',
         roles: ['admin'],
       });
 
-      await expect(session.can('project', 'update')).resolves.toBe(true);
-      await expect(session.can('invoice', 'read')).resolves.toBe(true);
-      await expect(session.can('invoice', 'approve')).resolves.toBe(true);
+      expect(session.can('project', 'update')).toBe(true);
+      expect(session.can('invoice', 'read')).toBe(true);
+      expect(session.can('invoice', 'approve')).toBe(true);
     });
   });
 });

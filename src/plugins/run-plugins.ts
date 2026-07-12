@@ -26,11 +26,11 @@ type EvaluationHookInput = {
  * Runs a single hook across all registered plugins sequentially.
  * No-op when `plugins` is empty or undefined (zero overhead path).
  */
-export async function runPluginHook<Subject, Context>(
+export function runPluginHook<Subject, Context>(
   plugins: readonly AuthorizationPlugin<Subject, Context>[] | undefined,
   hook: PluginHook,
   context: unknown,
-): Promise<void> {
+): void {
   if (plugins === undefined || plugins.length === 0) {
     return;
   }
@@ -38,15 +38,13 @@ export async function runPluginHook<Subject, Context>(
   for (const plugin of plugins) {
     const handler = plugin[hook];
     if (handler !== undefined) {
-      await handler(context as never);
+      handler(context as never);
     }
   }
 }
 
 /**
- * Runs `onSessionCreate` synchronously when possible. Async handlers are
- * scheduled without blocking `authz.session()` (session creation stays
- * synchronous); rejections propagate as unhandled rejections.
+ * Runs `onSessionCreate` synchronously for all registered plugins.
  */
 export function runSessionCreateHooks<Subject, Context>(
   plugins: readonly AuthorizationPlugin<Subject, Context>[] | undefined,
@@ -58,13 +56,8 @@ export function runSessionCreateHooks<Subject, Context>(
 
   for (const plugin of plugins) {
     const handler = plugin.onSessionCreate;
-    if (handler === undefined) {
-      continue;
-    }
-
-    const result = handler(context);
-    if (result instanceof Promise) {
-      void result;
+    if (handler !== undefined) {
+      handler(context);
     }
   }
 }
@@ -105,7 +98,7 @@ function toGrantedBy(grant: CompiledGrant) {
  * Notifies evaluation end hooks: `onEvaluationEnd`, then `onGranted` or
  * `onDenied` based on the result.
  */
-export async function notifyEvaluationEnd<Subject, Context>(
+export function notifyEvaluationEnd<Subject, Context>(
   plugins: readonly AuthorizationPlugin<Subject, Context>[] | undefined,
   input: EvaluationHookInput,
   result: {
@@ -114,7 +107,7 @@ export async function notifyEvaluationEnd<Subject, Context>(
     readonly evaluatedGrants: readonly GrantEvaluation[];
     readonly grantedBy?: CompiledGrant;
   },
-): Promise<void> {
+): void {
   if (plugins === undefined || plugins.length === 0) {
     return;
   }
@@ -133,7 +126,7 @@ export async function notifyEvaluationEnd<Subject, Context>(
     grantedBy,
   } as EvaluationEndContext<Subject, Context>;
 
-  await runPluginHook(plugins, 'onEvaluationEnd', endContext);
+  runPluginHook(plugins, 'onEvaluationEnd', endContext);
 
   if (result.allowed && grantedBy !== undefined) {
     const grantedContext: GrantedContext<Subject, Context> = {
@@ -142,7 +135,7 @@ export async function notifyEvaluationEnd<Subject, Context>(
       grantedBy,
     } as GrantedContext<Subject, Context>;
 
-    await runPluginHook(plugins, 'onGranted', grantedContext);
+    runPluginHook(plugins, 'onGranted', grantedContext);
     return;
   }
 
@@ -152,19 +145,19 @@ export async function notifyEvaluationEnd<Subject, Context>(
       allowed: false,
     } as DeniedContext<Subject, Context>;
 
-    await runPluginHook(plugins, 'onDenied', deniedContext);
+    runPluginHook(plugins, 'onDenied', deniedContext);
   }
 }
 
 /**
  * Notifies `onGrantEvaluation` after a single grant is evaluated.
  */
-export async function notifyGrantEvaluation<Subject, Context>(
+export function notifyGrantEvaluation<Subject, Context>(
   plugins: readonly AuthorizationPlugin<Subject, Context>[] | undefined,
   input: EvaluationHookInput,
   grant: CompiledGrant,
   matched: boolean,
-): Promise<void> {
+): void {
   if (plugins === undefined || plugins.length === 0) {
     return;
   }
@@ -180,5 +173,5 @@ export async function notifyGrantEvaluation<Subject, Context>(
     matched,
   } as GrantEvaluationContext<Subject, Context>;
 
-  await runPluginHook(plugins, 'onGrantEvaluation', context);
+  runPluginHook(plugins, 'onGrantEvaluation', context);
 }
