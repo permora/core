@@ -3,6 +3,7 @@ export type {
   AuthorizationPlugin,
   DeniedContext,
   EvaluationEndContext,
+  EvaluationSource,
   EvaluationStartContext,
   EvaluatedGrantSnapshot,
   GrantedContext,

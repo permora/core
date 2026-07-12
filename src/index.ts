@@ -64,7 +64,8 @@ export type {
   SessionPermissionGraph,
 } from './session';
 
-export type { EvaluationReason } from './evaluator';
+export type { EvaluationReason, EvaluationSource } from './evaluator';
+export { buildExplanation } from './evaluator';
 
 export {
   AuthorizationDeniedError,

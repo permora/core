@@ -1,4 +1,6 @@
-import type { EvaluationReason } from '../evaluator/evaluator.types';
+import type { AuthorizationExplanation } from '../evaluator/explanation.types';
+import type { EvaluationReason } from '../evaluator/evaluation-reason';
+import type { EvaluationSource } from '../evaluator/evaluation-source';
 
 /**
  * Snapshot passed to `onSessionCreate` after a session is compiled.
@@ -23,6 +25,7 @@ export type EvaluationContext<Subject, Context> = {
   readonly resource: string;
   readonly action: string;
   readonly resourceInstance: unknown;
+  readonly source: EvaluationSource;
 };
 
 export type EvaluationStartContext<Subject, Context> = EvaluationContext<
@@ -38,6 +41,7 @@ export type GrantEvaluationContext<Subject, Context> = EvaluationContext<
     readonly sourceScope: string;
     readonly sourceRole: string;
     readonly action: string;
+    readonly conditionId?: string;
   };
   readonly conditional: boolean;
   readonly matched: boolean;
@@ -63,6 +67,7 @@ export type EvaluationEndContext<Subject, Context> = EvaluationContext<
     readonly sourceRole: string;
     readonly action: string;
   };
+  readonly explanation: AuthorizationExplanation;
 };
 
 export type GrantedContext<Subject, Context> = EvaluationEndContext<
@@ -113,3 +118,5 @@ export type AuthorizationPlugin<Subject = unknown, Context = unknown> = {
   readonly onGranted?: (context: GrantedContext<Subject, Context>) => void;
   readonly onDenied?: (context: DeniedContext<Subject, Context>) => void;
 };
+
+export type { EvaluationSource } from '../evaluator/evaluation-source';

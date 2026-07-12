@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Plugin evaluation hooks expose `source` (`'can' | 'cannot' | 'assert' | 'explain' | 'allowedActions'`) to identify which session method triggered the evaluation
+- `onEvaluationEnd`, `onGranted`, and `onDenied` include `explanation` — same shape as `session.explain()` for that evaluation
+- `onGrantEvaluation` grant snapshot includes optional `conditionId` for named conditions
+- `buildExplanation()` helper and exported `EvaluationSource` type
+
 ## [0.3.0] - 2026-07-12
 
 ### Changed

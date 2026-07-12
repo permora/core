@@ -45,13 +45,20 @@ const audit = definePlugin({
   },
   onGranted(ctx) {
     console.log('allowed', {
+      source: ctx.source,
       resource: ctx.resource,
       action: ctx.action,
       grantedBy: ctx.grantedBy,
     });
   },
   onDenied(ctx) {
+    if (ctx.source === 'explain') {
+      console.log('denial detail', ctx.explanation);
+      return;
+    }
+
     console.log('denied', {
+      source: ctx.source,
       resource: ctx.resource,
       action: ctx.action,
       reason: ctx.reason,
@@ -111,7 +118,21 @@ onEvaluationStart → onEvaluationEnd → onDenied
 
 ### Conditional grants
 
-`onGrantEvaluation` receives `conditional: true` and `matched: false` when `when` fails.
+`onGrantEvaluation` receives `conditional: true`, `matched: false` when `when` fails, and `grant.conditionId` when the grant uses a named condition.
+
+### `source` and `explanation`
+
+Every evaluation hook (except `onSessionCreate`) receives `source`:
+
+| `source` | Triggered by |
+| -------- | ------------ |
+| `can` | `session.can()` |
+| `cannot` | `session.cannot()` |
+| `assert` | `session.assert()` |
+| `explain` | `session.explain()` |
+| `allowedActions` | each action in `session.allowedActions()` |
+
+`onEvaluationEnd`, `onGranted`, and `onDenied` also receive `explanation` — the same object `session.explain()` would return for that evaluation. Use `source === 'explain'` in audit plugins when you only want detailed denial logs on explicit explain calls.
 
 ### `allowedActions`
 

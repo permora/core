@@ -191,4 +191,98 @@ describe('plugin integration', () => {
 
     expect(() => session.can('project', 'read')).toThrow('audit failed');
   });
+
+  it('reports source=explain and explanation on onDenied when explain() is called', () => {
+    const onDenied = vi.fn();
+    const plugin = definePlugin({ onDenied });
+    const authz = createAuthorization({
+      resources,
+      permissions,
+      plugins: [plugin],
+    });
+    const session = authz.session({
+      subject: { id: 'u1' },
+      roles: ['viewer'],
+    });
+
+    const explanation = session.explain('project', 'update');
+
+    expect(explanation.allowed).toBe(false);
+    expect(onDenied).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'explain',
+        explanation,
+      }),
+    );
+  });
+
+  it('reports source=cannot on onGranted when cannot() is called', () => {
+    const onGranted = vi.fn();
+    const plugin = definePlugin({ onGranted });
+    const authz = createAuthorization({
+      resources,
+      permissions,
+      plugins: [plugin],
+    });
+    const session = authz.session({
+      subject: { id: 'u1' },
+      roles: ['viewer'],
+    });
+
+    expect(session.cannot('project', 'read')).toBe(false);
+
+    expect(onGranted).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'cannot',
+        allowed: true,
+      }),
+    );
+  });
+
+  it('reports source=assert on onDenied when assert() throws', () => {
+    const onDenied = vi.fn();
+    const plugin = definePlugin({ onDenied });
+    const authz = createAuthorization({
+      resources,
+      permissions,
+      plugins: [plugin],
+    });
+    const session = authz.session({
+      subject: { id: 'u1' },
+      roles: ['viewer'],
+    });
+
+    expect(() => session.assert('project', 'update')).toThrow();
+
+    expect(onDenied).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'assert',
+        explanation: expect.objectContaining({
+          allowed: false,
+          resource: 'project',
+          action: 'update',
+        }),
+      }),
+    );
+  });
+
+  it('reports source=allowedActions on evaluation hooks', () => {
+    const onEvaluationStart = vi.fn();
+    const plugin = definePlugin({ onEvaluationStart });
+    const authz = createAuthorization({
+      resources,
+      permissions,
+      plugins: [plugin],
+    });
+    const session = authz.session({
+      subject: { id: 'u1' },
+      roles: ['viewer'],
+    });
+
+    session.allowedActions('project');
+
+    expect(onEvaluationStart).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'allowedActions' }),
+    );
+  });
 });

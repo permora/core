@@ -1,5 +1,10 @@
 import type { CompiledGrant, GrantIndex } from '../grants/grant.types';
 import type { AuthorizationPlugin } from '../plugins/plugin.types';
+import type { EvaluationSource } from './evaluation-source';
+import type { EvaluationReason } from './evaluation-reason';
+
+export type { EvaluationReason } from './evaluation-reason';
+export type { EvaluationSource } from './evaluation-source';
 
 export type EvaluationInput = {
   readonly grants: GrantIndex;
@@ -10,6 +15,7 @@ export type EvaluationInput = {
   readonly resource: string;
   readonly action: string;
   readonly resourceInstance: unknown;
+  readonly source?: EvaluationSource;
   readonly plugins?: readonly AuthorizationPlugin[];
 };
 
@@ -17,12 +23,6 @@ export type GrantEvaluation = {
   readonly grant: CompiledGrant;
   readonly matched: boolean;
 };
-
-export type EvaluationReason =
-  | 'GRANT_MATCHED'
-  | 'CONDITION_MATCHED'
-  | 'NO_MATCHING_GRANT'
-  | 'ALL_CONDITIONS_FAILED';
 
 export type EvaluationResult = {
   readonly allowed: boolean;

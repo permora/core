@@ -312,20 +312,20 @@ const audit = definePlugin({
   onSessionCreate({ subject, scope, roles }) {
     /* session compiled */
   },
-  onEvaluationStart({ resource, action }) {
-    /* evaluation started */
+  onEvaluationStart({ source, resource, action }) {
+    /* source: 'can' | 'cannot' | 'assert' | 'explain' | 'allowedActions' */
   },
-  onGrantEvaluation({ grant, matched }) {
-    /* each grant candidate evaluated */
+  onGrantEvaluation({ source, grant, matched }) {
+    /* each grant candidate evaluated; grant.conditionId when named */
   },
-  onEvaluationEnd({ allowed, reason, evaluatedGrants }) {
-    /* evaluation finished */
+  onEvaluationEnd({ source, explanation }) {
+    /* explanation matches session.explain() for this evaluation */
   },
-  onGranted({ grantedBy }) {
+  onGranted({ source, explanation, grantedBy }) {
     /* allowed === true */
   },
-  onDenied({ reason }) {
-    /* allowed === false */
+  onDenied({ source, explanation, reason }) {
+    /* allowed === false; use source === 'explain' for detailed audit only */
   },
 });
 
@@ -336,14 +336,16 @@ const authz = createAuthorization({
 });
 ```
 
-| Hook                | When                                                                         |
-| ------------------- | ---------------------------------------------------------------------------- |
-| `onSessionCreate`   | After `authz.session()` compiles the session                                 |
-| `onEvaluationStart` | Start of each evaluation (`can`, `explain`, each action in `allowedActions`) |
-| `onGrantEvaluation` | After each grant candidate is evaluated                                      |
-| `onEvaluationEnd`   | End of each evaluation (allow or deny)                                       |
-| `onGranted`         | When the evaluation result is allowed                                        |
-| `onDenied`          | When the evaluation result is denied                                         |
+| Hook                | When                                                                         | Key context fields                                                 |
+| ------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `onSessionCreate`   | After `authz.session()` compiles the session                                 | `subject`, `scope`, `roles`                                        |
+| `onEvaluationStart` | Start of each evaluation (`can`, `explain`, each action in `allowedActions`) | `source`, `resource`, `action`                                     |
+| `onGrantEvaluation` | After each grant candidate is evaluated                                      | `source`, `grant`, `matched`                                       |
+| `onEvaluationEnd`   | End of each evaluation (allow or deny)                                       | `source`, `explanation`, flat `allowed`/`reason`/`evaluatedGrants` |
+| `onGranted`         | When the evaluation result is allowed                                        | `source`, `explanation`, `grantedBy`                               |
+| `onDenied`          | When the evaluation result is denied                                         | `source`, `explanation`, `reason`                                  |
+
+`explanation` on end hooks is the same shape as `session.explain()` for that evaluation. `source` identifies which session method triggered the evaluation.
 
 Plugins are optional; omitting `plugins` has zero overhead. Errors thrown by plugins propagate to the caller during evaluation. All plugin hooks run synchronously.
 

@@ -14,6 +14,7 @@ const hookInput = {
   resource: 'project',
   action: 'read',
   resourceInstance: undefined,
+  source: 'can' as const,
 };
 
 describe('runPluginHook', () => {
@@ -74,8 +75,11 @@ describe('notifyEvaluationEnd', () => {
     const order: string[] = [];
     const plugins: AuthorizationPlugin[] = [
       {
-        onEvaluationEnd: () => {
+        onEvaluationEnd: (ctx) => {
           order.push('end');
+          expect(ctx.source).toBe('explain');
+          expect(ctx.explanation.allowed).toBe(true);
+          expect(ctx.explanation.resource).toBe('project');
         },
         onGranted: () => {
           order.push('granted');
@@ -86,17 +90,21 @@ describe('notifyEvaluationEnd', () => {
       },
     ];
 
-    notifyEvaluationEnd(plugins, hookInput, {
-      allowed: true,
-      reason: 'GRANT_MATCHED',
-      evaluatedGrants: [],
-      grantedBy: {
-        sourceScope: '*',
-        sourceRole: 'viewer',
-        resource: 'project',
-        action: 'read',
+    notifyEvaluationEnd(
+      plugins,
+      { ...hookInput, source: 'explain' },
+      {
+        allowed: true,
+        reason: 'GRANT_MATCHED',
+        evaluatedGrants: [],
+        grantedBy: {
+          sourceScope: '*',
+          sourceRole: 'viewer',
+          resource: 'project',
+          action: 'read',
+        },
       },
-    });
+    );
 
     expect(order).toEqual(['end', 'granted']);
   });
@@ -128,18 +136,19 @@ describe('notifyEvaluationEnd', () => {
 });
 
 describe('notifyGrantEvaluation', () => {
-  it('passes grant metadata and matched flag', () => {
+  it('passes grant metadata, matched flag and conditionId', () => {
     const handler = vi.fn();
     const plugins: AuthorizationPlugin[] = [{ onGrantEvaluation: handler }];
 
     notifyGrantEvaluation(
       plugins,
-      hookInput,
+      { ...hookInput, source: 'assert' },
       {
         sourceScope: '*',
         sourceRole: 'editor',
         resource: 'project',
         action: 'delete',
+        conditionId: 'owner-only',
         when: () => true,
       },
       true,
@@ -147,10 +156,12 @@ describe('notifyGrantEvaluation', () => {
 
     expect(handler).toHaveBeenCalledWith(
       expect.objectContaining({
+        source: 'assert',
         grant: {
           sourceScope: '*',
           sourceRole: 'editor',
           action: 'delete',
+          conditionId: 'owner-only',
         },
         conditional: true,
         matched: true,

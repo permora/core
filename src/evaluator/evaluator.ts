@@ -1,5 +1,6 @@
 import { lookupGrants } from '../grants/grant-index';
 import {
+  DEFAULT_EVALUATION_SOURCE,
   notifyEvaluationEnd,
   notifyGrantEvaluation,
   runPluginHook,
@@ -19,6 +20,7 @@ function evaluationHookInput(input: EvaluationInput) {
     resource: input.resource,
     action: input.action,
     resourceInstance: input.resourceInstance,
+    source: input.source ?? DEFAULT_EVALUATION_SOURCE,
   };
 }
 

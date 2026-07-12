@@ -1,5 +1,7 @@
 import { AuthorizationDeniedError } from '../errors/authorization-denied-error';
+import { buildExplanation } from '../evaluator/build-explanation';
 import { evaluate } from '../evaluator/evaluator';
+import type { EvaluationSource } from '../evaluator/evaluation-source';
 import type { EvaluationResult } from '../evaluator/evaluator.types';
 import type { GrantIndex } from '../grants/grant.types';
 import type { AuthorizationPlugin } from '../plugins/plugin.types';
@@ -60,6 +62,7 @@ export class AuthorizationSession<
     resource: string,
     action: string,
     resourceInstance: unknown,
+    source: EvaluationSource,
   ): EvaluationResult {
     return evaluate({
       grants: this.grants,
@@ -70,8 +73,25 @@ export class AuthorizationSession<
       resource,
       action,
       resourceInstance,
+      source,
       plugins: this.plugins as readonly AuthorizationPlugin[],
     });
+  }
+
+  private buildExplanationFor(
+    resource: string,
+    action: string,
+    result: EvaluationResult,
+  ): AuthorizationExplanation {
+    return buildExplanation(
+      {
+        scope: this.scope,
+        roles: this.roles,
+        resource,
+        action,
+      },
+      result,
+    );
   }
 
   /**
@@ -83,7 +103,12 @@ export class AuthorizationSession<
     action: ActionOf<Resources, Name>,
     resourceInstance?: InstanceOf<Resources, Name>,
   ): boolean {
-    const result = this.evaluateAction(resource, action, resourceInstance);
+    const result = this.evaluateAction(
+      resource,
+      action,
+      resourceInstance,
+      'can',
+    );
     return result.allowed;
   }
 
@@ -95,7 +120,13 @@ export class AuthorizationSession<
     action: ActionOf<Resources, Name>,
     resourceInstance?: InstanceOf<Resources, Name>,
   ): boolean {
-    return !this.can(resource, action, resourceInstance);
+    const result = this.evaluateAction(
+      resource,
+      action,
+      resourceInstance,
+      'cannot',
+    );
+    return !result.allowed;
   }
 
   /**
@@ -106,7 +137,14 @@ export class AuthorizationSession<
     action: ActionOf<Resources, Name>,
     resourceInstance?: InstanceOf<Resources, Name>,
   ): void {
-    if (this.can(resource, action, resourceInstance)) {
+    const result = this.evaluateAction(
+      resource,
+      action,
+      resourceInstance,
+      'assert',
+    );
+
+    if (result.allowed) {
       return;
     }
 
@@ -127,30 +165,14 @@ export class AuthorizationSession<
     action: ActionOf<Resources, Name>,
     resourceInstance?: InstanceOf<Resources, Name>,
   ): AuthorizationExplanation {
-    const result = this.evaluateAction(resource, action, resourceInstance);
-
-    return {
-      allowed: result.allowed,
-      scope: this.scope,
-      roles: this.roles,
+    const result = this.evaluateAction(
       resource,
       action,
-      evaluatedGrants: result.evaluatedGrants.map((evaluation) => ({
-        sourceScope: evaluation.grant.sourceScope,
-        sourceRole: evaluation.grant.sourceRole,
-        action: evaluation.grant.action,
-        conditional: evaluation.grant.when !== undefined,
-        matched: evaluation.matched,
-      })),
-      grantedBy: result.grantedBy
-        ? {
-            sourceScope: result.grantedBy.sourceScope,
-            sourceRole: result.grantedBy.sourceRole,
-            action: result.grantedBy.action,
-          }
-        : undefined,
-      reason: result.reason,
-    };
+      resourceInstance,
+      'explain',
+    );
+
+    return this.buildExplanationFor(resource, action, result);
   }
 
   /**
@@ -168,7 +190,12 @@ export class AuthorizationSession<
     const allowed: ActionOf<Resources, Name>[] = [];
 
     for (const action of declaredActions) {
-      const result = this.evaluateAction(resource, action, resourceInstance);
+      const result = this.evaluateAction(
+        resource,
+        action,
+        resourceInstance,
+        'allowedActions',
+      );
       if (result.allowed) {
         allowed.push(action);
       }

@@ -1,5 +1,10 @@
+import { buildExplanation } from '../evaluator/build-explanation';
 import type { GrantEvaluation } from '../evaluator/evaluator.types';
-import type { EvaluationReason } from '../evaluator/evaluator.types';
+import type { EvaluationReason } from '../evaluator/evaluation-reason';
+import {
+  DEFAULT_EVALUATION_SOURCE,
+  type EvaluationSource,
+} from '../evaluator/evaluation-source';
 import type { CompiledGrant } from '../grants/grant.types';
 import type {
   AuthorizationPlugin,
@@ -20,6 +25,7 @@ type EvaluationHookInput = {
   readonly resource: string;
   readonly action: string;
   readonly resourceInstance: unknown;
+  readonly source: EvaluationSource;
 };
 
 /**
@@ -73,6 +79,7 @@ function buildEvaluationContext(
     resource: input.resource,
     action: input.action,
     resourceInstance: input.resourceInstance,
+    source: input.source,
   };
 }
 
@@ -117,6 +124,15 @@ export function notifyEvaluationEnd<Subject, Context>(
   const grantedBy = result.grantedBy
     ? toGrantedBy(result.grantedBy)
     : undefined;
+  const explanation = buildExplanation(
+    {
+      scope: input.scope,
+      roles: input.roles,
+      resource: input.resource,
+      action: input.action,
+    },
+    result,
+  );
 
   const endContext: EvaluationEndContext<Subject, Context> = {
     ...base,
@@ -124,6 +140,7 @@ export function notifyEvaluationEnd<Subject, Context>(
     reason: result.reason,
     evaluatedGrants,
     grantedBy,
+    explanation,
   } as EvaluationEndContext<Subject, Context>;
 
   runPluginHook(plugins, 'onEvaluationEnd', endContext);
@@ -168,6 +185,9 @@ export function notifyGrantEvaluation<Subject, Context>(
       sourceScope: grant.sourceScope,
       sourceRole: grant.sourceRole,
       action: grant.action,
+      ...(grant.conditionId !== undefined
+        ? { conditionId: grant.conditionId }
+        : {}),
     },
     conditional: grant.when !== undefined,
     matched,
@@ -175,3 +195,5 @@ export function notifyGrantEvaluation<Subject, Context>(
 
   runPluginHook(plugins, 'onGrantEvaluation', context);
 }
+
+export { DEFAULT_EVALUATION_SOURCE };

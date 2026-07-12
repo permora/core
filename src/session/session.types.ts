@@ -1,33 +1,11 @@
 import type { DefaultScope } from '../permissions/constants';
 import type { PermissionsMeta } from '../permissions/permission.types';
-import type { EvaluationReason } from '../evaluator/evaluator.types';
 
-/**
- * Result of `session.explain()`.
- */
-export type AuthorizationExplanation = {
-  readonly allowed: boolean;
-  readonly scope: string;
-  readonly roles: readonly string[];
-  readonly resource: string;
-  readonly action: string;
+export type { AuthorizationExplanation } from '../evaluator/explanation.types';
+import type { AuthorizationExplanation } from '../evaluator/explanation.types';
+import type { EvaluationReason } from '../evaluator/evaluation-reason';
 
-  readonly evaluatedGrants: ReadonlyArray<{
-    readonly sourceScope: string;
-    readonly sourceRole: string;
-    readonly action: string;
-    readonly conditional: boolean;
-    readonly matched: boolean;
-  }>;
-
-  readonly grantedBy?: {
-    readonly sourceScope: string;
-    readonly sourceRole: string;
-    readonly action: string;
-  };
-
-  readonly reason: EvaluationReason;
-};
+export type { EvaluationReason };
 
 /**
  * Normalized permission entry inside a {@link PermissionGraphRole}.
